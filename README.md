@@ -20,7 +20,6 @@ TapPay is a responsive, production-ready fintech mobile client crafted in Flutte
 7. [Getting Started & Installation](#getting-started--installation)
 8. [Testing & Quality Assurance](#testing--quality-assurance)
 9. [Assumptions & Trade-Offs](#assumptions--trade-offs)
-10. [AI Pair Programming & Prompt Reference](#ai-pair-programming--prompt-reference)
 
 ---
 
@@ -170,11 +169,3 @@ flutter run
 1. **Network Simulation:** A realistic 1.5-second simulated latency is used for transactions and KYC uploads, allowing realistic testing of loading skeletons, optimistic UI, and error recovery without requiring a live banking backend.
 2. **Biometrics in Simulators:** Local authentication falls back automatically to 4-digit PIN verification when running in emulators or devices without biometric hardware configured.
 3. **Camera & File Pickers:** In simulator environments where physical cameras are unavailable, mocked image placeholders allow testing the complete KYC verification flow.
-
----
-
-## AI Pair Programming & Prompt Reference
-
-This repository is configured for autonomous and guided AI pair programming:
-- **Master Specification:** [`PROJECT_SPECIFICATION.md`](file:///Users/macbook/Documents/Personal%20project/tappay/PROJECT_SPECIFICATION.md) contains the complete assessment requirements, rubric, and feature breakdown.
-- **Workspace Agent Rules:** [`AGENTS.md`](file:///Users/macbook/Documents/Personal%20project/tappay/AGENTS.md) and [`GEMINI.md`](file:///Users/macbook/Documents/Personal%20project/tappay/GEMINI.md) are loaded into the assistant's context automatically on every prompt to enforce the architectural conventions, security standards, and UI matching.

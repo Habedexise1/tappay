@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/theme_controller.dart';
 import '../../../core/utils/responsive_utils.dart';
 import '../../auth/presentation/screens/enter_pin_screen.dart';
-import 'widgets/custom_cards_illustration.dart';
-import 'widgets/globe_illustration.dart';
 import 'widgets/onboarding_indicator.dart';
 
 /// Welcome & Onboarding screen matching the TapPay Figma community design in both Light and Dark mode.
+/// Includes all 3 intro carousel pages with high-fidelity assets.
 class WelcomeScreen extends StatefulWidget {
   final bool enableAnimations;
 
@@ -93,7 +93,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 ),
               ),
 
-              // Carousel PageView (Globe & Custom Cards)
+              // Carousel PageView with all 3 Intro Pages
               Expanded(
                 child: PageView(
                   controller: _pageController,
@@ -102,27 +102,33 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     // Slide 1: Worldwide Globe
                     _OnboardingSlide(
                       isDark: isDark,
-                      illustration: GlobeIllustration(animate: widget.enableAnimations),
+                      assetPath: 'assets/images/onboarding_globe.png',
                       title: 'Not just\nlocally, it’s\nworldwide',
+                      animate: widget.enableAnimations,
                     ),
                     // Slide 2: Custom Cards
                     _OnboardingSlide(
                       isDark: isDark,
-                      illustration: CustomCardsIllustration(
-                        isDark: isDark,
-                        animate: widget.enableAnimations,
-                      ),
+                      assetPath: 'assets/images/onboarding_cards.png',
                       title: 'Custom\ncards, spend\nwith no limits',
+                      animate: widget.enableAnimations,
+                    ),
+                    // Slide 3: Send, Receive and Swap Money
+                    _OnboardingSlide(
+                      isDark: isDark,
+                      assetPath: 'assets/images/onboarding_swap.png',
+                      title: 'Send,\nreceive and\nswap money',
+                      animate: widget.enableAnimations,
                     ),
                   ],
                 ),
               ),
 
-              // Page Dots Indicator
+              // Page Dots Indicator (3 dots)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20.0),
+                padding: const EdgeInsets.symmetric(vertical: 18.0),
                 child: OnboardingIndicator(
-                  count: 2,
+                  count: 3,
                   currentIndex: _currentPage,
                   isDark: isDark,
                 ),
@@ -214,18 +220,32 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
 class _OnboardingSlide extends StatelessWidget {
   final bool isDark;
-  final Widget illustration;
+  final String assetPath;
   final String title;
+  final bool animate;
 
   const _OnboardingSlide({
     required this.isDark,
-    required this.illustration,
+    required this.assetPath,
     required this.title,
+    required this.animate,
   });
 
   @override
   Widget build(BuildContext context) {
     final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+
+    Widget imageWidget = Image.asset(
+      assetPath,
+      height: 270,
+      fit: BoxFit.contain,
+    );
+
+    if (animate) {
+      imageWidget = imageWidget
+          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .moveY(begin: 0, end: -6, duration: 2400.ms, curve: Curves.easeInOut);
+    }
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -234,20 +254,23 @@ class _OnboardingSlide extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 20),
-            // Illustration container
-            illustration,
-            const SizedBox(height: 36),
+            const SizedBox(height: 16),
+            Container(
+              height: 280,
+              alignment: Alignment.center,
+              child: imageWidget,
+            ),
+            const SizedBox(height: 28),
             // Headline
             Text(
               title,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Gordita',
-                fontSize: 38,
+                fontSize: 36,
                 fontWeight: FontWeight.w900,
                 color: textPrimary,
-                height: 1.12,
+                height: 1.15,
                 letterSpacing: -1.0,
               ),
             ),

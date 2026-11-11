@@ -44,7 +44,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# AI Agent Instructions & Assessment Specifications
+# Local specifications and environment files
 AGENTS.md
 GEMINI.md
 PROJECT_SPECIFICATION.md
