@@ -1,0 +1,148 @@
+import 'package:flutter/foundation.dart';
+import '../../../core/security/biometrics_service.dart';
+import '../../../core/storage/preferences_service.dart';
+import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/view_state.dart';
+import '../../widgets_bridge/home_widget_service.dart';
+import '../domain/dashboard_models.dart';
+
+/// Provider controller managing Dashboard state, account balance, beneficiaries, and notifications.
+class DashboardController extends ChangeNotifier {
+  final PreferencesService prefs;
+  final BiometricsService biometrics;
+
+  DashboardController({
+    required this.prefs,
+    required this.biometrics,
+  }) {
+    _loadDashboardData();
+  }
+
+  // --- States ---
+  ViewState<double> _balanceState = const Initial();
+  ViewState<double> get balanceState => _balanceState;
+
+  double _balance = 24580.50;
+  double get balance => _balance;
+
+  bool _isBalanceMasked = false;
+  bool get isBalanceMasked => _isBalanceMasked;
+
+  List<Beneficiary> _beneficiaries = [];
+  List<Beneficiary> get beneficiaries => _beneficiaries;
+
+  List<DashboardNotification> _notifications = [];
+  List<DashboardNotification> get notifications => _notifications;
+
+  int get unreadNotificationCount => _notifications.where((n) => !n.isRead).length;
+
+  Future<void> _loadDashboardData() async {
+    _balanceState = const Loading();
+    notifyListeners();
+
+    _balance = prefs.getPrimaryBalance();
+    _isBalanceMasked = prefs.isBalanceMasked();
+
+    _beneficiaries = const [
+      Beneficiary(id: 'b1', name: 'Sarah Jenkins', handle: '@sarahj', initials: 'SJ'),
+      Beneficiary(id: 'b2', name: 'David Miller', handle: '@dmiller', initials: 'DM'),
+      Beneficiary(id: 'b3', name: 'Elena Rostova', handle: '@erostova', initials: 'ER'),
+      Beneficiary(id: 'b4', name: 'Alexandre Chen', handle: '@alexc', initials: 'AC'),
+      Beneficiary(id: 'b5', name: 'Priya Sharma', handle: '@priyash', initials: 'PS'),
+    ];
+
+    _notifications = [
+      DashboardNotification(
+        id: 'n1',
+        title: 'Salary Credited',
+        subtitle: '\$4,500.00 has been deposited from Stripe Corp',
+        date: DateTime.now().subtract(const Duration(hours: 1)),
+        isRead: false,
+      ),
+      DashboardNotification(
+        id: 'n2',
+        title: 'Security Alert: New Sign-in',
+        subtitle: 'Sign-in detected from iPhone 15 Pro in London, UK',
+        date: DateTime.now().subtract(const Duration(hours: 6)),
+        isRead: false,
+      ),
+      DashboardNotification(
+        id: 'n3',
+        title: 'Monthly Statement Ready',
+        subtitle: 'Your statement for the previous month is ready for download',
+        date: DateTime.now().subtract(const Duration(days: 2)),
+        isRead: true,
+      ),
+    ];
+
+    _balanceState = Success(_balance);
+    notifyListeners();
+
+    // Sync balance with native Home Widget
+    _syncNativeWidget();
+  }
+
+  /// Toggle balance visibility; when unmasking, authenticate with biometrics.
+  Future<bool> toggleBalanceMask() async {
+    if (_isBalanceMasked) {
+      // Authenticate to reveal sensitive balance
+      final authenticated = await biometrics.authenticate(
+        reason: 'Authenticate to view account balance',
+      );
+      if (!authenticated) {
+        return false;
+      }
+    }
+
+    _isBalanceMasked = !_isBalanceMasked;
+    await prefs.setBalanceMasked(_isBalanceMasked);
+    notifyListeners();
+    return true;
+  }
+
+  /// Deduct balance after a transfer and flush to native widget store.
+  Future<void> deductBalance(double amount, {required String recipient}) async {
+    _balance = (_balance - amount).clamp(0.0, double.infinity);
+    await prefs.setPrimaryBalance(_balance);
+    _balanceState = Success(_balance);
+    notifyListeners();
+
+    await _syncNativeWidget(lastAmount: amount, lastMerchant: recipient);
+  }
+
+  /// Credit balance on top-up or receive.
+  Future<void> creditBalance(double amount, {required String sender}) async {
+    _balance += amount;
+    await prefs.setPrimaryBalance(_balance);
+    _balanceState = Success(_balance);
+    notifyListeners();
+
+    await _syncNativeWidget(lastAmount: amount, lastMerchant: sender);
+  }
+
+  Future<void> _syncNativeWidget({
+    double lastAmount = 199.99,
+    String lastMerchant = 'Apple Store',
+  }) async {
+    await HomeWidgetService.updateWidgetData(
+      balance: _balance,
+      lastAmount: lastAmount,
+      lastMerchant: lastMerchant,
+      lastDate: DateFormatter.formatShort(DateTime.now()),
+    );
+  }
+
+  void markNotificationsAsRead() {
+    _notifications = _notifications
+        .map((n) => DashboardNotification(
+              id: n.id,
+              title: n.title,
+              subtitle: n.subtitle,
+              date: n.date,
+              isRead: true,
+            ))
+        .toList();
+    notifyListeners();
+  }
+}
+
