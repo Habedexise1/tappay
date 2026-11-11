@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/theme_controller.dart';
 import '../../../core/utils/responsive_utils.dart';
+import '../../auth/presentation/screens/enter_pin_screen.dart';
 import 'widgets/custom_cards_illustration.dart';
 import 'widgets/globe_illustration.dart';
 import 'widgets/onboarding_indicator.dart';
@@ -139,10 +140,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       height: 56,
                       child: ElevatedButton(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Get started pressed'),
-                              duration: Duration(seconds: 1),
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const EnterPinScreen(),
                             ),
                           );
                         },
@@ -173,10 +173,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       height: 56,
                       child: OutlinedButton(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Login pressed'),
-                              duration: Duration(seconds: 1),
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const EnterPinScreen(),
                             ),
                           );
                         },
