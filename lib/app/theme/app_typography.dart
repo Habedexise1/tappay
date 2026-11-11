@@ -1,71 +1,84 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-/// Typography definitions matching Figma design tokens (Inter & Plus Jakarta Sans).
+/// Typography definitions matching TapPay Figma design using Gordita font family.
 class AppTypography {
   AppTypography._();
 
-  static TextStyle displayLarge = GoogleFonts.inter(
-    fontSize: 32,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -0.5,
+  static const String fontFamily = 'Gordita';
+
+  static const TextStyle displayLarge = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 34,
+    fontWeight: FontWeight.w900,
+    letterSpacing: -0.8,
+    height: 1.15,
   );
 
-  static TextStyle displayMedium = GoogleFonts.inter(
+  static const TextStyle displayMedium = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 28,
     fontWeight: FontWeight.w700,
-    letterSpacing: -0.4,
+    letterSpacing: -0.5,
+    height: 1.2,
   );
 
-  static TextStyle displaySmall = GoogleFonts.inter(
+  static const TextStyle displaySmall = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 24,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
     letterSpacing: -0.3,
   );
 
-  static TextStyle headlineMedium = GoogleFonts.inter(
+  static const TextStyle headlineMedium = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 20,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
     letterSpacing: -0.2,
   );
 
-  static TextStyle titleLarge = GoogleFonts.inter(
+  static const TextStyle titleLarge = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 18,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
   );
 
-  static TextStyle titleMedium = GoogleFonts.inter(
+  static const TextStyle titleMedium = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w600,
   );
 
-  static TextStyle bodyLarge = GoogleFonts.inter(
+  static const TextStyle bodyLarge = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w400,
     letterSpacing: 0.1,
   );
 
-  static TextStyle bodyMedium = GoogleFonts.inter(
+  static const TextStyle bodyMedium = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w400,
     letterSpacing: 0.1,
   );
 
-  static TextStyle bodySmall = GoogleFonts.inter(
+  static const TextStyle bodySmall = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 12,
     fontWeight: FontWeight.w400,
   );
 
-  static TextStyle labelLarge = GoogleFonts.inter(
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
+  static const TextStyle labelLarge = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 16,
+    fontWeight: FontWeight.w700,
     letterSpacing: 0.2,
   );
 
-  static TextStyle labelSmall = GoogleFonts.inter(
+  static const TextStyle labelSmall = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 11,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.3,
   );
 }
-

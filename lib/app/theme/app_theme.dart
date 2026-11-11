@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'app_colors.dart';
 import 'app_typography.dart';
 
-/// App theme configurations providing distinct ThemeData for Light and Dark modes.
+/// App theme configurations providing distinct ThemeData for Light and Dark modes matching TapPay Figma.
 class AppTheme {
   AppTheme._();
 
@@ -18,21 +18,20 @@ class AppTheme {
       titleMedium: AppTypography.titleMedium.copyWith(color: AppColors.lightTextPrimary),
       bodyLarge: AppTypography.bodyLarge.copyWith(color: AppColors.lightTextPrimary),
       bodyMedium: AppTypography.bodyMedium.copyWith(color: AppColors.lightTextSecondary),
-      bodySmall: AppTypography.bodySmall.copyWith(color: AppColors.lightTextMuted),
+      bodySmall: AppTypography.bodySmall.copyWith(color: AppColors.lightTextSecondary),
       labelLarge: AppTypography.labelLarge.copyWith(color: AppColors.lightTextPrimary),
-      labelSmall: AppTypography.labelSmall.copyWith(color: AppColors.lightTextMuted),
+      labelSmall: AppTypography.labelSmall.copyWith(color: AppColors.lightTextSecondary),
     );
 
     return ThemeData(
       useMaterial3: true,
+      fontFamily: AppTypography.fontFamily,
       brightness: Brightness.light,
-      primaryColor: AppColors.primary,
+      primaryColor: AppColors.primaryGreen,
       scaffoldBackgroundColor: AppColors.lightBackground,
       colorScheme: const ColorScheme.light(
-        primary: AppColors.primary,
-        onPrimary: Colors.white,
-        secondary: AppColors.secondary,
-        onSecondary: Colors.white,
+        primary: AppColors.primaryGreen,
+        onPrimary: AppColors.lightTextPrimary,
         surface: AppColors.lightSurface,
         onSurface: AppColors.lightTextPrimary,
         error: AppColors.accentRed,
@@ -40,57 +39,12 @@ class AppTheme {
         outline: AppColors.lightBorder,
       ),
       textTheme: textTheme,
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.lightBackground,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
         foregroundColor: AppColors.lightTextPrimary,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: AppTypography.titleLarge.copyWith(color: AppColors.lightTextPrimary),
         systemOverlayStyle: SystemUiOverlayStyle.dark,
-      ),
-      cardTheme: CardThemeData(
-        color: AppColors.lightSurface,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.lightBorder, width: 1),
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: AppTypography.labelLarge.copyWith(fontSize: 16),
-          elevation: 0,
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.lightSurface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.lightBorder, width: 1),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.lightBorder, width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.lightBorderFocus, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.accentRed, width: 1.5),
-        ),
-      ),
-      dividerTheme: const DividerThemeData(
-        color: AppColors.lightBorder,
-        thickness: 1,
-        space: 1,
       ),
     );
   }
@@ -106,21 +60,20 @@ class AppTheme {
       titleMedium: AppTypography.titleMedium.copyWith(color: AppColors.darkTextPrimary),
       bodyLarge: AppTypography.bodyLarge.copyWith(color: AppColors.darkTextPrimary),
       bodyMedium: AppTypography.bodyMedium.copyWith(color: AppColors.darkTextSecondary),
-      bodySmall: AppTypography.bodySmall.copyWith(color: AppColors.darkTextMuted),
+      bodySmall: AppTypography.bodySmall.copyWith(color: AppColors.darkTextSecondary),
       labelLarge: AppTypography.labelLarge.copyWith(color: AppColors.darkTextPrimary),
-      labelSmall: AppTypography.labelSmall.copyWith(color: AppColors.darkTextMuted),
+      labelSmall: AppTypography.labelSmall.copyWith(color: AppColors.darkTextSecondary),
     );
 
     return ThemeData(
       useMaterial3: true,
+      fontFamily: AppTypography.fontFamily,
       brightness: Brightness.dark,
-      primaryColor: AppColors.primary,
+      primaryColor: AppColors.primaryGreen,
       scaffoldBackgroundColor: AppColors.darkBackground,
       colorScheme: const ColorScheme.dark(
-        primary: AppColors.primary,
-        onPrimary: Colors.white,
-        secondary: AppColors.secondary,
-        onSecondary: Colors.white,
+        primary: AppColors.primaryGreen,
+        onPrimary: AppColors.darkBackground,
         surface: AppColors.darkSurface,
         onSurface: AppColors.darkTextPrimary,
         error: AppColors.accentRed,
@@ -128,59 +81,13 @@ class AppTheme {
         outline: AppColors.darkBorder,
       ),
       textTheme: textTheme,
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.darkBackground,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
         foregroundColor: AppColors.darkTextPrimary,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: AppTypography.titleLarge.copyWith(color: AppColors.darkTextPrimary),
         systemOverlayStyle: SystemUiOverlayStyle.light,
-      ),
-      cardTheme: CardThemeData(
-        color: AppColors.darkSurface,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.darkBorder, width: 1),
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: AppTypography.labelLarge.copyWith(fontSize: 16),
-          elevation: 0,
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.darkSurfaceVariant,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.darkBorder, width: 1),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.darkBorder, width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.darkBorderFocus, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.accentRed, width: 1.5),
-        ),
-      ),
-      dividerTheme: const DividerThemeData(
-        color: AppColors.darkBorder,
-        thickness: 1,
-        space: 1,
       ),
     );
   }
 }
-

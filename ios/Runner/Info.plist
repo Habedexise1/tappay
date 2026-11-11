@@ -66,5 +66,22 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>TapPay requires camera access for QR code scanning and KYC identity verification.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>TapPay requires Face ID to secure your balance and authorize transactions.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.example.tappay</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>tappay</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

@@ -12,6 +12,7 @@ import 'core/widgets/app_card.dart';
 import 'features/auth/presentation/auth_controller.dart';
 import 'features/dashboard/presentation/dashboard_controller.dart';
 import 'features/kyc/presentation/kyc_controller.dart';
+import 'features/onboarding/presentation/splash_screen.dart';
 import 'features/qr_transfer/presentation/qr_transfer_controller.dart';
 import 'features/transactions/data/transaction_repository.dart';
 import 'features/transactions/presentation/transaction_controller.dart';
@@ -44,6 +45,7 @@ class TapPayRoot extends StatelessWidget {
   final SecureStorageService secureStorageService;
   final BiometricsService biometricsService;
   final TransactionRepository transactionRepository;
+  final Widget? initialHome;
 
   const TapPayRoot({
     super.key,
@@ -51,6 +53,7 @@ class TapPayRoot extends StatelessWidget {
     required this.secureStorageService,
     required this.biometricsService,
     required this.transactionRepository,
+    this.initialHome,
   });
 
   @override
@@ -104,13 +107,15 @@ class TapPayRoot extends StatelessWidget {
               ),
         ),
       ],
-      child: const TapPayApp(),
+      child: TapPayApp(home: initialHome),
     );
   }
 }
 
 class TapPayApp extends StatelessWidget {
-  const TapPayApp({super.key});
+  final Widget? home;
+
+  const TapPayApp({super.key, this.home});
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +133,7 @@ class TapPayApp extends StatelessWidget {
           child: child ?? const SizedBox.shrink(),
         );
       },
-      home: const ArchitectureReadyScreen(),
+      home: home ?? const SplashScreen(),
     );
   }
 }
