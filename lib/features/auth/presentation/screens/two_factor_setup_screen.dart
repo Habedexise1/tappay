@@ -154,7 +154,7 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
                     ),
                     Switch.adaptive(
                       value: _isEnabled,
-                      activeColor: AppColors.primaryGreen,
+                      activeTrackColor: AppColors.primaryGreen,
                       onChanged: (val) {
                         setState(() {
                           _isEnabled = val;
@@ -245,18 +245,28 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
                             ],
                           ),
                         ),
-                        Radio<TwoFactorMethod>(
-                          value: method,
-                          groupValue: _isEnabled ? _selectedMethod : null,
-                          activeColor: AppColors.primaryGreen,
-                          onChanged: _isEnabled
-                              ? (val) {
-                                  if (val != null) {
-                                    setState(() {
-                                      _selectedMethod = val;
-                                    });
-                                  }
-                                }
+                        Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected && _isEnabled
+                                  ? AppColors.primaryGreen
+                                  : textSecondary.withValues(alpha: 0.4),
+                              width: 2,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: isSelected && _isEnabled
+                              ? Container(
+                                  width: 12,
+                                  height: 12,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primaryGreen,
+                                    shape: BoxShape.circle,
+                                  ),
+                                )
                               : null,
                         ),
                       ],
