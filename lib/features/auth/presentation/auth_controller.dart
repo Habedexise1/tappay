@@ -5,19 +5,14 @@ import '../../../core/storage/secure_storage_service.dart';
 import '../../../core/utils/view_state.dart';
 import '../domain/auth_models.dart';
 
-/// Provider controller managing Authentication, PIN management, OTP recovery, and 2FA.
 class AuthController extends ChangeNotifier {
   final SecureStorageService storage;
   final BiometricsService biometrics;
 
-  AuthController({
-    required this.storage,
-    required this.biometrics,
-  }) {
+  AuthController({required this.storage, required this.biometrics}) {
     _loadInitialSecurityState();
   }
 
-  // --- States ---
   ViewState<SecuritySettings> _securityState = const Initial();
   ViewState<SecuritySettings> get securityState => _securityState;
 
@@ -27,7 +22,12 @@ class AuthController extends ChangeNotifier {
   ViewState<bool> _otpState = const Initial();
   ViewState<bool> get otpState => _otpState;
 
-  // --- OTP Timer ---
+  ViewState<bool> _authFlowState = const Initial();
+  ViewState<bool> get authFlowState => _authFlowState;
+
+  SignUpDraft _signUpDraft = const SignUpDraft();
+  SignUpDraft get signUpDraft => _signUpDraft;
+
   int _otpCountdown = 60;
   int get otpCountdown => _otpCountdown;
   bool get canResendOtp => _otpCountdown == 0;
@@ -47,7 +47,7 @@ class AuthController extends ChangeNotifier {
 
     try {
       final hasPin = await storage.hasPin();
-      // Default to 1234 if not set yet for demonstration ease
+
       if (!hasPin) {
         await storage.savePin('1234');
       }
@@ -76,7 +76,110 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  // --- PIN Operations ---
+  void updateSignUpContact({
+    required String value,
+    required bool isPhone,
+    CountryOption? phoneCountry,
+  }) {
+    _signUpDraft = _signUpDraft.copyWith(
+      contactValue: value,
+      isPhoneContact: isPhone,
+      phoneCountry: phoneCountry,
+    );
+    notifyListeners();
+  }
+
+  void updateSignUpName({required String firstName, required String lastName}) {
+    _signUpDraft = _signUpDraft.copyWith(
+      firstName: firstName,
+      lastName: lastName,
+    );
+    notifyListeners();
+  }
+
+  void updateSignUpAddress({CountryOption? country, required String address}) {
+    _signUpDraft = _signUpDraft.copyWith(country: country, address: address);
+    notifyListeners();
+  }
+
+  void updateSignUpTapTag(String tag) {
+    _signUpDraft = _signUpDraft.copyWith(tapTag: tag);
+    notifyListeners();
+  }
+
+  void updateSignUpBvn(String bvn) {
+    _signUpDraft = _signUpDraft.copyWith(bvn: bvn);
+    notifyListeners();
+  }
+
+  Future<bool> completeSignUp(String password) async {
+    if (password.length < 8) {
+      _authFlowState = const Failure(
+        'Password must be at least 8 alphanumeric and special characters.',
+      );
+      notifyListeners();
+      return false;
+    }
+
+    _authFlowState = const Loading('Creating account...');
+    notifyListeners();
+
+    await storage.saveToken(
+      'tappay_token_${DateTime.now().millisecondsSinceEpoch}',
+    );
+
+    _authFlowState = const Success(true);
+    notifyListeners();
+    return true;
+  }
+
+  Future<bool> loginWithCredentials({
+    required String email,
+    required String password,
+  }) async {
+    if (password.trim().isEmpty) {
+      _authFlowState = const Failure('Please enter your password.');
+      notifyListeners();
+      return false;
+    }
+
+    _authFlowState = const Loading('Signing in...');
+    notifyListeners();
+
+    await Future.delayed(const Duration(milliseconds: 500));
+    await storage.saveToken(
+      'tappay_token_${DateTime.now().millisecondsSinceEpoch}',
+    );
+
+    _authFlowState = const Success(true);
+    notifyListeners();
+    return true;
+  }
+
+  Future<bool> requestPasswordReset(String email) async {
+    if (!email.contains('@')) {
+      _authFlowState = const Failure('Enter a valid email address.');
+      notifyListeners();
+      return false;
+    }
+
+    _authFlowState = const Loading('Sending OTP...');
+    notifyListeners();
+
+    await Future.delayed(const Duration(milliseconds: 400));
+
+    _authFlowState = const Success(true);
+    notifyListeners();
+    return true;
+  }
+
+  Future<void> saveCreatedPin(String pin) async {
+    await storage.savePin(pin);
+    _settings = _settings.copyWith(isPinSet: true);
+    _pinActionState = const Success(true);
+    notifyListeners();
+  }
+
   Future<bool> verifyPin(String enteredPin) async {
     _pinActionState = const Loading('Verifying PIN...');
     notifyListeners();
@@ -124,8 +227,9 @@ class AuthController extends ChangeNotifier {
     return true;
   }
 
-  // --- Biometrics Operations ---
-  Future<bool> authenticateWithBiometrics({String reason = 'Authenticate for TapPay'}) async {
+  Future<bool> authenticateWithBiometrics({
+    String reason = 'Authenticate for TapPay',
+  }) async {
     final success = await biometrics.authenticate(reason: reason);
     return success;
   }
@@ -136,7 +240,6 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- 2FA Operations ---
   Future<void> updateTwoFactor({
     required bool enabled,
     required TwoFactorMethod method,
@@ -155,9 +258,8 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- Password Recovery & OTP Timer ---
-  void startOtpTimer() {
-    _otpCountdown = 60;
+  void startOtpTimer({int seconds = 60}) {
+    _otpCountdown = seconds;
     _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_otpCountdown > 0) {
@@ -186,9 +288,9 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  Future<void> resendOtp() async {
+  Future<void> resendOtp({int seconds = 60}) async {
     if (!canResendOtp) return;
-    startOtpTimer();
+    startOtpTimer(seconds: seconds);
     notifyListeners();
   }
 
@@ -198,4 +300,3 @@ class AuthController extends ChangeNotifier {
     super.dispose();
   }
 }
-

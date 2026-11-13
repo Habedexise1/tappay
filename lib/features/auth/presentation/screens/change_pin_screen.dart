@@ -9,8 +9,14 @@ import '../../../../core/widgets/app_num_pad.dart';
 import '../auth_controller.dart';
 
 enum ChangePinStep {
-  current('Enter Current PIN', 'Verify your identity with your existing 4-digit PIN'),
-  newPin('Create New PIN', 'Enter a 4-digit PIN that is easy to remember but hard to guess'),
+  current(
+    'Enter Current PIN',
+    'Verify your identity with your existing 4-digit PIN',
+  ),
+  newPin(
+    'Create New PIN',
+    'Enter a 4-digit PIN that is easy to remember but hard to guess',
+  ),
   confirm('Confirm New PIN', 'Re-enter your new 4-digit PIN to confirm');
 
   final String title;
@@ -33,10 +39,10 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
   String? _errorMessage;
 
   String get _activePin => switch (_currentStep) {
-        ChangePinStep.current => _currentPin,
-        ChangePinStep.newPin => _newPin,
-        ChangePinStep.confirm => _confirmPin,
-      };
+    ChangePinStep.current => _currentPin,
+    ChangePinStep.newPin => _newPin,
+    ChangePinStep.confirm => _confirmPin,
+  };
 
   void _onDigitPressed(String digit) {
     if (_activePin.length < 4) {
@@ -143,15 +149,25 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
     final themeController = context.watch<ThemeController>();
     final isDark = themeController.isDarkMode;
 
-    final bgColor = isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+    final bgColor = isDark
+        ? AppColors.darkBackground
+        : AppColors.lightBackground;
+    final textPrimary = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+    final textSecondary = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
 
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: textPrimary, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: textPrimary,
+            size: 20,
+          ),
           onPressed: () {
             if (_currentStep == ChangePinStep.confirm) {
               setState(() {
@@ -175,7 +191,7 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
           child: Column(
             children: [
               const SizedBox(height: 16),
-              // Step Title
+
               Text(
                 _currentStep.title,
                 style: TextStyle(
@@ -201,7 +217,6 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
               ),
               const SizedBox(height: 36),
 
-              // PIN Indicator Dots
               AppPinIndicator(
                 pinLength: _activePin.length,
                 maxLength: 4,
@@ -223,7 +238,6 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
 
               const Spacer(),
 
-              // Custom Numpad
               AppNumPad(
                 onDigitPressed: _onDigitPressed,
                 onDeletePressed: _onDeletePressed,

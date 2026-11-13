@@ -6,18 +6,15 @@ import '../../../../app/theme/theme_controller.dart';
 import '../../../../core/utils/responsive_utils.dart';
 import '../../../../core/utils/view_state.dart';
 import '../../../../core/widgets/app_num_pad.dart';
+import '../../../dashboard/presentation/screens/dashboard_screen.dart';
 import '../auth_controller.dart';
 import 'change_pin_screen.dart';
 import 'otp_verification_screen.dart';
 
-/// Enter PIN screen with custom animated digit indicators, numpad, and biometric trigger.
 class EnterPinScreen extends StatefulWidget {
   final VoidCallback? onAuthenticated;
 
-  const EnterPinScreen({
-    super.key,
-    this.onAuthenticated,
-  });
+  const EnterPinScreen({super.key, this.onAuthenticated});
 
   @override
   State<EnterPinScreen> createState() => _EnterPinScreenState();
@@ -49,6 +46,13 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
     }
   }
 
+  void _navigateToDashboard() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      (route) => false,
+    );
+  }
+
   Future<void> _verifyPin() async {
     final authController = context.read<AuthController>();
     final success = await authController.verifyPin(_enteredPin);
@@ -58,13 +62,7 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
         if (widget.onAuthenticated != null) {
           widget.onAuthenticated!();
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('PIN Verified successfully!'),
-              backgroundColor: AppColors.primaryGreen,
-              duration: Duration(seconds: 1),
-            ),
-          );
+          _navigateToDashboard();
         }
       } else {
         setState(() {
@@ -85,13 +83,7 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
       if (widget.onAuthenticated != null) {
         widget.onAuthenticated!();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Biometric verification successful!'),
-            backgroundColor: AppColors.primaryGreen,
-            duration: Duration(seconds: 1),
-          ),
-        );
+        _navigateToDashboard();
       }
     }
   }
@@ -102,15 +94,25 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
     final isDark = themeController.isDarkMode;
     final authController = context.watch<AuthController>();
 
-    final bgColor = isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+    final bgColor = isDark
+        ? AppColors.darkBackground
+        : AppColors.lightBackground;
+    final textPrimary = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+    final textSecondary = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
 
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: textPrimary, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: textPrimary,
+            size: 20,
+          ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         actions: [
@@ -131,7 +133,7 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
           child: Column(
             children: [
               const SizedBox(height: 16),
-              // Title & Subtitle
+
               Text(
                 'Enter your PIN',
                 style: TextStyle(
@@ -155,14 +157,12 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
               ),
               const SizedBox(height: 36),
 
-              // PIN Indicator Dots
               AppPinIndicator(
                 pinLength: _enteredPin.length,
                 maxLength: 4,
                 hasError: _hasError,
               ),
 
-              // Error feedback
               if (_hasError) ...[
                 const SizedBox(height: 12),
                 Text(
@@ -180,7 +180,6 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
 
               const Spacer(),
 
-              // Custom Numpad
               AppNumPad(
                 onDigitPressed: _onDigitPressed,
                 onDeletePressed: _onDeletePressed,
@@ -190,7 +189,6 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
 
               const SizedBox(height: 16),
 
-              // Bottom Links: Forgot PIN & Change PIN
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -208,14 +206,13 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
                         fontFamily: 'Gordita',
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.primaryGreen : const Color(0xFF0D1311),
+                        color: isDark
+                            ? AppColors.primaryGreen
+                            : const Color(0xFF0D1311),
                       ),
                     ),
                   ),
-                  Text(
-                    '•',
-                    style: TextStyle(color: textSecondary),
-                  ),
+                  Text('•', style: TextStyle(color: textSecondary)),
                   TextButton(
                     onPressed: () {
                       Navigator.of(context).push(
@@ -230,7 +227,9 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
                         fontFamily: 'Gordita',
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.primaryGreen : const Color(0xFF0D1311),
+                        color: isDark
+                            ? AppColors.primaryGreen
+                            : const Color(0xFF0D1311),
                       ),
                     ),
                   ),

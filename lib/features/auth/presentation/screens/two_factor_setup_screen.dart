@@ -53,9 +53,15 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
     final isDark = themeController.isDarkMode;
     final authController = context.watch<AuthController>();
 
-    final bgColor = isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+    final bgColor = isDark
+        ? AppColors.darkBackground
+        : AppColors.lightBackground;
+    final textPrimary = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+    final textSecondary = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -70,7 +76,11 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
           ),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: textPrimary, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: textPrimary,
+            size: 20,
+          ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
@@ -83,7 +93,6 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
             children: [
               const SizedBox(height: 16),
 
-              // Active Status Header Card
               AppCard(
                 child: Row(
                   children: [
@@ -97,8 +106,12 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        _isEnabled ? Icons.shield_rounded : Icons.shield_outlined,
-                        color: _isEnabled ? AppColors.primaryGreen : Colors.grey,
+                        _isEnabled
+                            ? Icons.shield_rounded
+                            : Icons.shield_outlined,
+                        color: _isEnabled
+                            ? AppColors.primaryGreen
+                            : Colors.grey,
                         size: 28,
                       ),
                     ),
@@ -119,10 +132,15 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
                                 decoration: BoxDecoration(
                                   color: _isEnabled
-                                      ? AppColors.primaryGreen.withValues(alpha: 0.2)
+                                      ? AppColors.primaryGreen.withValues(
+                                          alpha: 0.2,
+                                        )
                                       : Colors.red.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
@@ -132,7 +150,9 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
                                     fontFamily: 'Gordita',
                                     fontSize: 11,
                                     fontWeight: FontWeight.w800,
-                                    color: _isEnabled ? AppColors.primaryGreen : AppColors.accentRed,
+                                    color: _isEnabled
+                                        ? AppColors.primaryGreen
+                                        : AppColors.accentRed,
                                   ),
                                 ),
                               ),
@@ -187,7 +207,6 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Method Options
               ...TwoFactorMethod.values.map((method) {
                 final isSelected = _selectedMethod == method;
                 return Padding(
@@ -202,14 +221,18 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
                         : null,
                     borderRadius: 16,
                     borderSide: isSelected && _isEnabled
-                        ? const BorderSide(color: AppColors.primaryGreen, width: 2)
+                        ? const BorderSide(
+                            color: AppColors.primaryGreen,
+                            width: 2,
+                          )
                         : null,
                     child: Row(
                       children: [
                         Icon(
                           switch (method) {
                             TwoFactorMethod.sms => Icons.phone_android_rounded,
-                            TwoFactorMethod.authenticator => Icons.security_rounded,
+                            TwoFactorMethod.authenticator =>
+                              Icons.security_rounded,
                             TwoFactorMethod.email => Icons.mail_outline_rounded,
                           },
                           color: isSelected && _isEnabled
@@ -277,7 +300,6 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
 
               const Spacer(),
 
-              // Save Button
               AppButton(
                 text: 'Save 2FA Configuration',
                 isLoading: authController.securityState.isLoading,

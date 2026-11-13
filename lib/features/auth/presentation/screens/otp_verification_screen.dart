@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pinput/pinput.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
@@ -23,49 +24,26 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  final List<TextEditingController> _digitControllers =
-      List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  final TextEditingController _pinController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthController>().startOtpTimer();
-      _focusNodes[0].requestFocus();
+      _focusNode.requestFocus();
     });
   }
 
   @override
   void dispose() {
-    for (var c in _digitControllers) {
-      c.dispose();
-    }
-    for (var f in _focusNodes) {
-      f.dispose();
-    }
+    _pinController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
-  String get _otpCode => _digitControllers.map((c) => c.text).join();
-
-  void _onDigitChanged(int index, String value) {
-    if (value.isNotEmpty) {
-      if (index < 5) {
-        _focusNodes[index + 1].requestFocus();
-      } else {
-        _focusNodes[index].unfocus();
-        _verifyCode();
-      }
-    } else {
-      if (index > 0) {
-        _focusNodes[index - 1].requestFocus();
-      }
-    }
-  }
-
-  Future<void> _verifyCode() async {
-    final code = _otpCode;
+  Future<void> _verifyCode(String code) async {
     if (code.length != 6) return;
 
     final authController = context.read<AuthController>();
@@ -75,7 +53,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Verification successful! You can now reset your PIN.'),
+            content: Text(
+              'Verification successful! You can now reset your PIN.',
+            ),
             backgroundColor: AppColors.primaryGreen,
             duration: Duration(seconds: 2),
           ),
@@ -84,10 +64,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           MaterialPageRoute(builder: (_) => const ChangePinScreen()),
         );
       } else {
-        for (var c in _digitControllers) {
-          c.clear();
-        }
-        _focusNodes[0].requestFocus();
+        _pinController.clear();
+        _focusNode.requestFocus();
       }
     }
   }
@@ -98,17 +76,60 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     final isDark = themeController.isDarkMode;
     final authController = context.watch<AuthController>();
 
-    final bgColor = isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+    final bgColor = isDark
+        ? AppColors.darkBackground
+        : AppColors.lightBackground;
+    final textPrimary = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+    final textSecondary = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
 
-    final timerText = '0:${authController.otpCountdown.toString().padLeft(2, '0')}';
+    final timerText =
+        '0:${authController.otpCountdown.toString().padLeft(2, '0')}';
+
+    final defaultPinTheme = PinTheme(
+      width: 48,
+      height: 56,
+      textStyle: TextStyle(
+        fontFamily: 'Gordita',
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        color: textPrimary,
+      ),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.darkSurfaceVariant
+            : AppColors.lightSurfaceVariant,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorderSubtle,
+        ),
+      ),
+    );
+
+    final focusedPinTheme = defaultPinTheme.copyWith(
+      decoration: defaultPinTheme.decoration!.copyWith(
+        border: Border.all(color: AppColors.primaryGreen, width: 2),
+      ),
+    );
+
+    final submittedPinTheme = defaultPinTheme.copyWith(
+      decoration: defaultPinTheme.decoration!.copyWith(
+        border: Border.all(color: AppColors.primaryGreen, width: 1.2),
+      ),
+    );
 
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: textPrimary, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: textPrimary,
+            size: 20,
+          ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
@@ -142,57 +163,19 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               ),
               const SizedBox(height: 36),
 
-              // 6-digit Box Inputs
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (index) {
-                  return SizedBox(
-                    width: 48,
-                    height: 56,
-                    child: TextField(
-                      controller: _digitControllers[index],
-                      focusNode: _focusNodes[index],
-                      keyboardType: TextInputType.number,
-                      textAlign: TextAlign.center,
-                      maxLength: 1,
-                      style: TextStyle(
-                        fontFamily: 'Gordita',
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: textPrimary,
-                      ),
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: InputDecoration(
-                        counterText: '',
-                        filled: true,
-                        fillColor: isDark
-                            ? AppColors.darkSurfaceVariant
-                            : AppColors.lightSurfaceVariant,
-                        contentPadding: EdgeInsets.zero,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: isDark ? AppColors.darkBorder : AppColors.lightBorderSubtle,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: isDark ? AppColors.darkBorder : AppColors.lightBorderSubtle,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: AppColors.primaryGreen,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                      onChanged: (val) => _onDigitChanged(index, val),
-                    ),
-                  );
-                }),
+              Center(
+                child: Pinput(
+                  length: 6,
+                  controller: _pinController,
+                  focusNode: _focusNode,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  defaultPinTheme: defaultPinTheme,
+                  focusedPinTheme: focusedPinTheme,
+                  submittedPinTheme: submittedPinTheme,
+                  separatorBuilder: (_) => const SizedBox(width: 8),
+                  onCompleted: _verifyCode,
+                ),
               ),
 
               if (authController.otpState is Failure) ...[
@@ -210,7 +193,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
               const SizedBox(height: 32),
 
-              // Countdown Timer & Resend Button
               Center(
                 child: Column(
                   children: [
@@ -247,11 +229,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
               const Spacer(),
 
-              // Confirm Button
               AppButton(
                 text: 'Verify & Proceed',
                 isLoading: authController.otpState is Loading,
-                onPressed: _otpCode.length == 6 ? _verifyCode : null,
+                onPressed: _pinController.text.length == 6
+                    ? () => _verifyCode(_pinController.text)
+                    : null,
               ),
 
               const SizedBox(height: 24),
