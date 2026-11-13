@@ -22,8 +22,12 @@ class BeneficiariesList extends StatelessWidget {
     final isDark = themeController.isDarkMode;
     final dashboard = context.watch<DashboardController>();
 
-    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+    final textPrimary = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+    final textSecondary = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,7 +65,6 @@ class BeneficiariesList extends StatelessWidget {
             separatorBuilder: (context, index) => const SizedBox(width: 14),
             itemBuilder: (context, index) {
               if (index == 0) {
-                // Add New Beneficiary Avatar Button
                 return InkWell(
                   onTap: onAddBeneficiary,
                   borderRadius: BorderRadius.circular(30),
@@ -73,7 +76,9 @@ class BeneficiariesList extends StatelessWidget {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isDark ? AppColors.darkBorder : AppColors.lightBorderSubtle,
+                            color: isDark
+                                ? AppColors.darkBorder
+                                : AppColors.lightBorderSubtle,
                             width: 1.5,
                             strokeAlign: BorderSide.strokeAlignInside,
                           ),
@@ -110,10 +115,14 @@ class BeneficiariesList extends StatelessWidget {
                       height: 56,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurfaceVariant : const Color(0xFFF0FDF4),
+                        color: isDark
+                            ? AppColors.darkSurfaceVariant
+                            : const Color(0xFFF0FDF4),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isDark ? AppColors.darkBorder : AppColors.primaryGreen.withValues(alpha: 0.3),
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : AppColors.primaryGreen.withValues(alpha: 0.3),
                           width: 1.5,
                         ),
                       ),
@@ -123,7 +132,9 @@ class BeneficiariesList extends StatelessWidget {
                           fontFamily: 'Gordita',
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF065F46),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF065F46),
                         ),
                       ),
                     ),
@@ -153,4 +164,3 @@ class BeneficiariesList extends StatelessWidget {
     );
   }
 }
-

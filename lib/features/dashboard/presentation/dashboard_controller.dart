@@ -1,29 +1,35 @@
 import 'package:flutter/foundation.dart';
 import '../../../core/security/biometrics_service.dart';
 import '../../../core/storage/preferences_service.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/view_state.dart';
 import '../../widgets_bridge/home_widget_service.dart';
 import '../domain/dashboard_models.dart';
 
-/// Provider controller managing Dashboard state, account balance, beneficiaries, and notifications.
 class DashboardController extends ChangeNotifier {
   final PreferencesService prefs;
   final BiometricsService biometrics;
 
-  DashboardController({
-    required this.prefs,
-    required this.biometrics,
-  }) {
+  DashboardController({required this.prefs, required this.biometrics}) {
     _loadDashboardData();
   }
 
-  // --- States ---
   ViewState<double> _balanceState = const Initial();
   ViewState<double> get balanceState => _balanceState;
 
-  double _balance = 24580.50;
+  double _balance = 6000000.00;
   double get balance => _balance;
+
+  WalletCurrency _selectedCurrency = WalletCurrency.ngn;
+  WalletCurrency get selectedCurrency => _selectedCurrency;
+
+  double get convertedBalance => _balance * _selectedCurrency.rateFromNgn;
+
+  String get formattedActiveBalance => CurrencyFormatter.format(
+    convertedBalance,
+    symbol: _selectedCurrency.symbol,
+  );
 
   bool _isBalanceMasked = false;
   bool get isBalanceMasked => _isBalanceMasked;
@@ -34,21 +40,48 @@ class DashboardController extends ChangeNotifier {
   List<DashboardNotification> _notifications = [];
   List<DashboardNotification> get notifications => _notifications;
 
-  int get unreadNotificationCount => _notifications.where((n) => !n.isRead).length;
+  int get unreadNotificationCount =>
+      _notifications.where((n) => !n.isRead).length;
 
   Future<void> _loadDashboardData() async {
     _balanceState = const Loading();
     notifyListeners();
 
-    _balance = prefs.getPrimaryBalance();
+    final stored = prefs.getPrimaryBalance();
+    _balance = stored == 24580.50 ? 6000000.00 : stored;
     _isBalanceMasked = prefs.isBalanceMasked();
 
     _beneficiaries = const [
-      Beneficiary(id: 'b1', name: 'Sarah Jenkins', handle: '@sarahj', initials: 'SJ'),
-      Beneficiary(id: 'b2', name: 'David Miller', handle: '@dmiller', initials: 'DM'),
-      Beneficiary(id: 'b3', name: 'Elena Rostova', handle: '@erostova', initials: 'ER'),
-      Beneficiary(id: 'b4', name: 'Alexandre Chen', handle: '@alexc', initials: 'AC'),
-      Beneficiary(id: 'b5', name: 'Priya Sharma', handle: '@priyash', initials: 'PS'),
+      Beneficiary(
+        id: 'b1',
+        name: 'Sarah Jenkins',
+        handle: '@sarahj',
+        initials: 'SJ',
+      ),
+      Beneficiary(
+        id: 'b2',
+        name: 'David Miller',
+        handle: '@dmiller',
+        initials: 'DM',
+      ),
+      Beneficiary(
+        id: 'b3',
+        name: 'Elena Rostova',
+        handle: '@erostova',
+        initials: 'ER',
+      ),
+      Beneficiary(
+        id: 'b4',
+        name: 'Alexandre Chen',
+        handle: '@alexc',
+        initials: 'AC',
+      ),
+      Beneficiary(
+        id: 'b5',
+        name: 'Priya Sharma',
+        handle: '@priyash',
+        initials: 'PS',
+      ),
     ];
 
     _notifications = [
@@ -78,14 +111,44 @@ class DashboardController extends ChangeNotifier {
     _balanceState = Success(_balance);
     notifyListeners();
 
-    // Sync balance with native Home Widget
     _syncNativeWidget();
   }
 
-  /// Toggle balance visibility; when unmasking, authenticate with biometrics.
+  void selectCurrency(WalletCurrency currency) {
+    if (_selectedCurrency == currency) return;
+    _selectedCurrency = currency;
+    notifyListeners();
+  }
+
+  void addBeneficiary({required String name, required String handle}) {
+    final normalizedHandle = handle.startsWith('@') ? handle : '@$handle';
+    final alreadyExists = _beneficiaries.any(
+      (b) => b.handle.toLowerCase() == normalizedHandle.toLowerCase(),
+    );
+    if (alreadyExists) return;
+
+    final parts = name.trim().split(RegExp(r'\s+'));
+    final initials = parts.length >= 2
+        ? '${parts[0][0]}${parts[1][0]}'.toUpperCase()
+        : name
+              .trim()
+              .substring(0, name.trim().length >= 2 ? 2 : 1)
+              .toUpperCase();
+
+    _beneficiaries = [
+      Beneficiary(
+        id: 'b_${DateTime.now().millisecondsSinceEpoch}',
+        name: name.trim(),
+        handle: normalizedHandle,
+        initials: initials,
+      ),
+      ..._beneficiaries,
+    ];
+    notifyListeners();
+  }
+
   Future<bool> toggleBalanceMask() async {
     if (_isBalanceMasked) {
-      // Authenticate to reveal sensitive balance
       final authenticated = await biometrics.authenticate(
         reason: 'Authenticate to view account balance',
       );
@@ -100,7 +163,6 @@ class DashboardController extends ChangeNotifier {
     return true;
   }
 
-  /// Deduct balance after a transfer and flush to native widget store.
   Future<void> deductBalance(double amount, {required String recipient}) async {
     _balance = (_balance - amount).clamp(0.0, double.infinity);
     await prefs.setPrimaryBalance(_balance);
@@ -110,7 +172,6 @@ class DashboardController extends ChangeNotifier {
     await _syncNativeWidget(lastAmount: amount, lastMerchant: recipient);
   }
 
-  /// Credit balance on top-up or receive.
   Future<void> creditBalance(double amount, {required String sender}) async {
     _balance += amount;
     await prefs.setPrimaryBalance(_balance);
@@ -134,15 +195,16 @@ class DashboardController extends ChangeNotifier {
 
   void markNotificationsAsRead() {
     _notifications = _notifications
-        .map((n) => DashboardNotification(
-              id: n.id,
-              title: n.title,
-              subtitle: n.subtitle,
-              date: n.date,
-              isRead: true,
-            ))
+        .map(
+          (n) => DashboardNotification(
+            id: n.id,
+            title: n.title,
+            subtitle: n.subtitle,
+            date: n.date,
+            isRead: true,
+          ),
+        )
         .toList();
     notifyListeners();
   }
 }
-

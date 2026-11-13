@@ -66,7 +66,9 @@ class QuickActionsBar extends StatelessWidget {
     required VoidCallback onTap,
     bool isHighlighted = false,
   }) {
-    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+    final textPrimary = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
 
     return InkWell(
       onTap: onTap,
@@ -80,8 +82,8 @@ class QuickActionsBar extends StatelessWidget {
               color: isHighlighted
                   ? AppColors.primaryGreen
                   : isDark
-                      ? AppColors.darkSurface
-                      : AppColors.lightSurfaceVariant,
+                  ? AppColors.darkSurface
+                  : AppColors.lightSurfaceVariant,
               borderRadius: BorderRadius.circular(18),
               border: isHighlighted
                   ? null
@@ -95,8 +97,8 @@ class QuickActionsBar extends StatelessWidget {
               color: isHighlighted
                   ? const Color(0xFF081711)
                   : isDark
-                      ? Colors.white
-                      : const Color(0xFF0D1311),
+                  ? Colors.white
+                  : const Color(0xFF0D1311),
             ),
           ),
           const SizedBox(height: 8),
@@ -114,4 +116,3 @@ class QuickActionsBar extends StatelessWidget {
     );
   }
 }
-

@@ -41,7 +41,6 @@ class BalanceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top Row: Account Label + Eye Toggle
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -75,13 +74,17 @@ class BalanceCard extends StatelessWidget {
                   color: Colors.white,
                   size: 20,
                 ),
-                tooltip: dashboard.isBalanceMasked ? 'Reveal Balance' : 'Hide Balance',
+                tooltip: dashboard.isBalanceMasked
+                    ? 'Reveal Balance'
+                    : 'Hide Balance',
                 onPressed: () async {
                   final allowed = await dashboard.toggleBalanceMask();
                   if (!allowed && context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Authentication required to reveal balance'),
+                        content: Text(
+                          'Authentication required to reveal balance',
+                        ),
                         backgroundColor: AppColors.accentRed,
                         duration: Duration(seconds: 2),
                       ),
@@ -94,7 +97,6 @@ class BalanceCard extends StatelessWidget {
 
           const SizedBox(height: 8),
 
-          // Main Balance Display
           Text(
             displayBalance,
             style: const TextStyle(
@@ -108,7 +110,6 @@ class BalanceCard extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // Bottom Tag & Inflow Info
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -117,14 +118,19 @@ class BalanceCard extends StatelessWidget {
                   Clipboard.setData(const ClipboardData(text: '@alexpay'));
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Account handle @alexpay copied to clipboard'),
+                      content: Text(
+                        'Account handle @alexpay copied to clipboard',
+                      ),
                       duration: Duration(seconds: 1),
                     ),
                   );
                 },
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -154,7 +160,11 @@ class BalanceCard extends StatelessWidget {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.arrow_upward_rounded, color: AppColors.primaryGreen, size: 12),
+                    Icon(
+                      Icons.arrow_upward_rounded,
+                      color: AppColors.primaryGreen,
+                      size: 12,
+                    ),
                     SizedBox(width: 4),
                     Text(
                       '+12.8% this month',
@@ -175,4 +185,3 @@ class BalanceCard extends StatelessWidget {
     );
   }
 }
-
