@@ -20,88 +20,110 @@ class AppButton extends StatelessWidget {
     this.variant = AppButtonVariant.primary,
     this.icon,
     this.width,
-    this.height = 54,
+    this.height = 52,
   });
+
+  ({Color bgColor, Color fgColor, Border? border}) _resolveStyle({
+    required bool isDark,
+    required bool isEnabled,
+  }) {
+    final disabledAlpha = isEnabled ? 1.0 : 0.5;
+
+    return switch (variant) {
+      AppButtonVariant.primary => (
+        bgColor: AppColors.primaryGreen.withValues(alpha: disabledAlpha),
+        fgColor: AppColors.lightTextPrimary.withValues(alpha: disabledAlpha),
+        border: null,
+      ),
+      AppButtonVariant.secondary => (
+        bgColor:
+            (isDark
+                    ? AppColors.darkSurfaceVariant
+                    : AppColors.lightSurfaceVariant)
+                .withValues(alpha: disabledAlpha),
+        fgColor:
+            (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary)
+                .withValues(alpha: disabledAlpha),
+        border: isDark
+            ? Border.all(color: AppColors.darkBorder, width: 1)
+            : null,
+      ),
+      AppButtonVariant.outline => (
+        bgColor: isDark
+            ? AppColors.cardWhite.withValues(alpha: disabledAlpha)
+            : Colors.transparent,
+        fgColor: AppColors.lightTextPrimary.withValues(alpha: disabledAlpha),
+        border: isDark
+            ? null
+            : Border.all(
+                color: AppColors.lightBorder.withValues(alpha: disabledAlpha),
+                width: 1.5,
+              ),
+      ),
+      AppButtonVariant.text => (
+        bgColor: Colors.transparent,
+        fgColor: AppColors.primaryGreen.withValues(alpha: disabledAlpha),
+        border: null,
+      ),
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isEnabled = onPressed != null && !isLoading;
+    final style = _resolveStyle(isDark: isDark, isEnabled: isEnabled);
 
-    Widget child = isLoading
-        ? const SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.5,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-          )
-        : Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 20),
-                const SizedBox(width: 8),
-              ],
-              Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.2,
+    return Semantics(
+      button: true,
+      enabled: isEnabled,
+      label: text,
+      child: GestureDetector(
+        onTap: isEnabled ? onPressed : null,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          width: width ?? double.infinity,
+          height: height,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+            color: style.bgColor,
+            borderRadius: BorderRadius.circular(height / 2),
+            border: style.border,
+          ),
+          child: isLoading
+              ? SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(style.fgColor),
+                  ),
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, size: 20, color: style.fgColor),
+                      const SizedBox(width: 8),
+                    ],
+                    Flexible(
+                      child: Text(
+                        text,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'Gordita',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: style.fgColor,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          );
-
-    return SizedBox(
-      width: width ?? double.infinity,
-      height: height,
-      child: switch (variant) {
-        AppButtonVariant.primary => ElevatedButton(
-            onPressed: isLoading ? null : onPressed,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-            child: child,
-          ),
-        AppButtonVariant.secondary => ElevatedButton(
-            onPressed: isLoading ? null : onPressed,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isDark ? AppColors.darkSurfaceVariant : AppColors.lightSurfaceVariant,
-              foregroundColor: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-            child: child,
-          ),
-        AppButtonVariant.outline => OutlinedButton(
-            onPressed: isLoading ? null : onPressed,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: isDark ? Colors.white : AppColors.primary,
-              side: BorderSide(
-                color: isDark ? AppColors.darkBorder : AppColors.primary,
-                width: 1.5,
-              ),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-            child: child,
-          ),
-        AppButtonVariant.text => TextButton(
-            onPressed: isLoading ? null : onPressed,
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-            child: child,
-          ),
-      },
+        ),
+      ),
     );
   }
 }
-

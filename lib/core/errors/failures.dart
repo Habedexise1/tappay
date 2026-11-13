@@ -1,4 +1,3 @@
-/// Domain failure models for clean architecture.
 sealed class Failure {
   final String message;
   final String? code;

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Typography definitions matching TapPay Figma design using Gordita font family.
 class AppTypography {
   AppTypography._();
 

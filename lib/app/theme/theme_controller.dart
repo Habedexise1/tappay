@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/storage/preferences_service.dart';
 
-/// Theme controller using [ChangeNotifier] for Provider state management.
-/// Manages theme state (Light, Dark, System) and persists user choice.
 class ThemeController extends ChangeNotifier {
   final PreferencesService _prefs;
   late ThemeMode _themeMode;
@@ -15,7 +13,8 @@ class ThemeController extends ChangeNotifier {
 
   bool get isDarkMode {
     if (_themeMode == ThemeMode.system) {
-      return WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+      return WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+          Brightness.dark;
     }
     return _themeMode == ThemeMode.dark;
   }
@@ -32,4 +31,3 @@ class ThemeController extends ChangeNotifier {
     await setThemeMode(newMode);
   }
 }
-

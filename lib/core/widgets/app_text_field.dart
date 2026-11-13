@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../app/theme/app_colors.dart';
 
 class AppTextField extends StatelessWidget {
@@ -13,6 +14,9 @@ class AppTextField extends StatelessWidget {
   final String? errorText;
   final bool readOnly;
   final VoidCallback? onTap;
+  final int maxLines;
+  final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
 
   const AppTextField({
     super.key,
@@ -27,11 +31,17 @@ class AppTextField extends StatelessWidget {
     this.errorText,
     this.readOnly = false,
     this.onTap,
+    this.maxLines = 1,
+    this.maxLength,
+    this.inputFormatters,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final borderColor = isDark
+        ? const Color(0xFF44554C)
+        : const Color(0xFFA0AEB8);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,9 +50,12 @@ class AppTextField extends StatelessWidget {
           Text(
             label!,
             style: TextStyle(
+              fontFamily: 'Gordita',
               fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+              fontWeight: FontWeight.w500,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -54,42 +67,56 @@ class AppTextField extends StatelessWidget {
           obscureText: obscureText,
           readOnly: readOnly,
           onTap: onTap,
+          maxLines: obscureText ? 1 : maxLines,
+          maxLength: maxLength,
+          inputFormatters: inputFormatters,
           style: TextStyle(
-            fontSize: 16,
+            fontFamily: 'Gordita',
+            fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+            color: isDark
+                ? AppColors.darkTextPrimary
+                : AppColors.lightTextPrimary,
           ),
           decoration: InputDecoration(
             hintText: hintText,
+            counterText: '',
             hintStyle: TextStyle(
-              color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
-              fontSize: 15,
+              fontFamily: 'Gordita',
+              color: isDark
+                  ? AppColors.darkTextMuted
+                  : AppColors.lightTextMuted,
+              fontSize: 14,
             ),
             prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
             errorText: errorText,
             filled: true,
-            fillColor: isDark ? AppColors.darkSurfaceVariant : AppColors.lightSurface,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            fillColor: isDark ? Colors.transparent : Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 15,
+            ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                width: 1,
-              ),
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: borderColor, width: 1.1),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                width: 1,
-              ),
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: borderColor, width: 1.1),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
-                color: AppColors.primary,
-                width: 2,
+                color: AppColors.primaryGreen,
+                width: 1.6,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: AppColors.accentRed,
+                width: 1.2,
               ),
             ),
           ),
@@ -98,4 +125,3 @@ class AppTextField extends StatelessWidget {
     );
   }
 }
-

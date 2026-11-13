@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Facade wrapping [SharedPreferences] for general app state and UI preferences:
-/// ThemeMode, balance masking toggle, onboarding state.
 class PreferencesService {
   final SharedPreferences _prefs;
 
@@ -17,7 +15,6 @@ class PreferencesService {
     return PreferencesService(prefs);
   }
 
-  // --- Theme Mode ---
   ThemeMode getThemeMode() {
     final modeStr = _prefs.getString(_keyThemeMode);
     return switch (modeStr) {
@@ -36,7 +33,6 @@ class PreferencesService {
     await _prefs.setString(_keyThemeMode, str);
   }
 
-  // --- Balance Masking ---
   bool isBalanceMasked() {
     return _prefs.getBool(_keyBalanceMasked) ?? false;
   }
@@ -45,7 +41,6 @@ class PreferencesService {
     await _prefs.setBool(_keyBalanceMasked, masked);
   }
 
-  // --- Primary Balance Storage ---
   double getPrimaryBalance() {
     return _prefs.getDouble(_keyPrimaryBalance) ?? 24580.50;
   }
@@ -54,4 +49,3 @@ class PreferencesService {
     await _prefs.setDouble(_keyPrimaryBalance, balance);
   }
 }
-

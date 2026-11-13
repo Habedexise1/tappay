@@ -1,6 +1,5 @@
 import 'package:intl/intl.dart';
 
-/// Formatter utilities for currency display and balance masking.
 class CurrencyFormatter {
   CurrencyFormatter._();
 
@@ -14,7 +13,6 @@ class CurrencyFormatter {
     decimalDigits: 1,
   );
 
-  /// Format an amount into standard currency display: e.g. "$12,450.80".
   static String format(double amount, {String symbol = '\$'}) {
     if (symbol != '\$') {
       final custom = NumberFormat.currency(symbol: symbol, decimalDigits: 2);
@@ -23,14 +21,11 @@ class CurrencyFormatter {
     return _standardFormatter.format(amount);
   }
 
-  /// Compact format for widgets or tight spaces: e.g. "$12.5K".
   static String formatCompact(double amount) {
     return _compactFormatter.format(amount);
   }
 
-  /// Masked balance display for privacy (e.g. "••••••••").
   static String mask() {
     return '••••••••';
   }
 }
-

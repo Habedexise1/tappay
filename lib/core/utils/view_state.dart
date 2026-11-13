@@ -1,4 +1,3 @@
-/// Sealed class hierarchy representing immutable UI states with Dart 3 pattern matching.
 sealed class ViewState<T> {
   const ViewState();
 
@@ -16,33 +15,27 @@ sealed class ViewState<T> {
   }
 }
 
-/// Initial state before any action has occurred.
 final class Initial<T> extends ViewState<T> {
   const Initial();
 }
 
-/// State while an asynchronous operation is in flight.
 final class Loading<T> extends ViewState<T> {
   final String? message;
   const Loading([this.message]);
 }
 
-/// State when the operation succeeds with payload [data].
 final class Success<T> extends ViewState<T> {
   final T data;
   const Success(this.data);
 }
 
-/// State when an error or failure occurs.
 final class Failure<T> extends ViewState<T> {
   final String message;
   final String? code;
   const Failure(this.message, {this.code});
 }
 
-/// State when an operation succeeds but the returned dataset is empty.
 final class Empty<T> extends ViewState<T> {
   final String message;
   const Empty([this.message = 'No data found']);
 }
-

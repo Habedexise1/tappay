@@ -1,16 +1,17 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Facade wrapping [FlutterSecureStorage] for storing sensitive credentials:
-/// PIN hashes, auth tokens, and 2FA states.
 class SecureStorageService {
   final FlutterSecureStorage _storage;
 
   SecureStorageService({FlutterSecureStorage? storage})
-      : _storage = storage ??
-            const FlutterSecureStorage(
-              aOptions: AndroidOptions(encryptedSharedPreferences: true),
-              iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
-            );
+    : _storage =
+          storage ??
+          const FlutterSecureStorage(
+            aOptions: AndroidOptions(encryptedSharedPreferences: true),
+            iOptions: IOSOptions(
+              accessibility: KeychainAccessibility.first_unlock,
+            ),
+          );
 
   static const String _keyPin = 'tappay_secure_pin';
   static const String _keyBiometricEnabled = 'tappay_biometric_enabled';
@@ -18,7 +19,6 @@ class SecureStorageService {
   static const String _keyTwoFactorType = 'tappay_two_factor_type';
   static const String _keyAuthToken = 'tappay_auth_token';
 
-  // --- PIN Management ---
   Future<void> savePin(String pin) async {
     await _storage.write(key: _keyPin, value: pin);
   }
@@ -36,7 +36,6 @@ class SecureStorageService {
     await _storage.delete(key: _keyPin);
   }
 
-  // --- Biometrics & 2FA ---
   Future<void> setBiometricsEnabled(bool enabled) async {
     await _storage.write(key: _keyBiometricEnabled, value: enabled.toString());
   }
@@ -60,7 +59,6 @@ class SecureStorageService {
     return await _storage.read(key: _keyTwoFactorType) ?? 'SMS';
   }
 
-  // --- Auth Token ---
   Future<void> saveToken(String token) async {
     await _storage.write(key: _keyAuthToken, value: token);
   }
@@ -73,4 +71,3 @@ class SecureStorageService {
     await _storage.deleteAll();
   }
 }
-

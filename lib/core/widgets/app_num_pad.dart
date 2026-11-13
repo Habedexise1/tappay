@@ -33,18 +33,18 @@ class AppPinIndicator extends StatelessWidget {
             color: hasError
                 ? AppColors.accentRed
                 : isFilled
-                    ? AppColors.primary
-                    : isDark
-                        ? AppColors.darkSurfaceVariant
-                        : AppColors.lightBorder,
+                ? AppColors.primary
+                : isDark
+                ? AppColors.darkSurfaceVariant
+                : AppColors.lightBorder,
             border: Border.all(
               color: hasError
                   ? AppColors.accentRed
                   : isFilled
-                      ? AppColors.primary
-                      : isDark
-                          ? AppColors.darkBorder
-                          : AppColors.lightBorder,
+                  ? AppColors.primary
+                  : isDark
+                  ? AppColors.darkBorder
+                  : AppColors.lightBorder,
               width: 2,
             ),
             boxShadow: isFilled && !hasError
@@ -95,7 +95,9 @@ class AppNumPad extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isDark ? AppColors.darkSurfaceVariant.withValues(alpha: 0.5) : AppColors.lightSurface,
+            color: isDark
+                ? AppColors.darkSurfaceVariant.withValues(alpha: 0.5)
+                : AppColors.lightSurface,
             border: Border.all(
               color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
               width: 1,
@@ -106,7 +108,9 @@ class AppNumPad extends StatelessWidget {
             style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w600,
-              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
             ),
           ),
         ),
@@ -136,7 +140,9 @@ class AppNumPad extends StatelessWidget {
           child: Icon(
             icon,
             size: 28,
-            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+            color: isDark
+                ? AppColors.darkTextSecondary
+                : AppColors.lightTextSecondary,
           ),
         ),
       ),
@@ -186,4 +192,3 @@ class AppNumPad extends StatelessWidget {
     );
   }
 }
-

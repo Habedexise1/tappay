@@ -1,4 +1,3 @@
-/// Custom app exceptions.
 class AppException implements Exception {
   final String message;
   final String? code;
@@ -16,10 +15,8 @@ class ServerException extends AppException {
 }
 
 class AuthException extends AppException {
-  const AuthException([
-    super.message = 'Authentication failed.',
-    String? code,
-  ]) : super(code: code);
+  const AuthException([super.message = 'Authentication failed.', String? code])
+    : super(code: code);
 }
 
 class StorageException extends AppException {

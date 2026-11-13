@@ -1,6 +1,5 @@
 import 'package:intl/intl.dart';
 
-/// Formatter for transaction timestamps, KYC dates, and activity logs.
 class DateFormatter {
   DateFormatter._();
 
@@ -14,7 +13,6 @@ class DateFormatter {
   static String formatTime(DateTime date) => _timeOnly.format(date);
   static String formatIso(DateTime date) => _isoDate.format(date);
 
-  /// Friendly relative or short date (Today, Yesterday, or MMM dd).
   static String formatRelative(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -28,4 +26,3 @@ class DateFormatter {
     return _fullDateTime.format(date);
   }
 }
-
