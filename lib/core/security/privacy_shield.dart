@@ -1,9 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-/// App Privacy Shield widget that wraps the entire app root.
-/// Obscures and blurs the screen whenever the app is transitioned
-/// to background, inactive, or recent apps task switcher.
 class AppPrivacyShield extends StatefulWidget {
   final Widget child;
   final bool isShieldEnabled;
@@ -18,7 +15,8 @@ class AppPrivacyShield extends StatefulWidget {
   State<AppPrivacyShield> createState() => _AppPrivacyShieldState();
 }
 
-class _AppPrivacyShieldState extends State<AppPrivacyShield> with WidgetsBindingObserver {
+class _AppPrivacyShieldState extends State<AppPrivacyShield>
+    with WidgetsBindingObserver {
   bool _isBackgrounded = false;
 
   @override
@@ -37,7 +35,8 @@ class _AppPrivacyShieldState extends State<AppPrivacyShield> with WidgetsBinding
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!widget.isShieldEnabled) return;
 
-    final shouldObscure = state == AppLifecycleState.inactive ||
+    final shouldObscure =
+        state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden;
 
@@ -113,4 +112,3 @@ class _AppPrivacyShieldState extends State<AppPrivacyShield> with WidgetsBinding
     );
   }
 }
-

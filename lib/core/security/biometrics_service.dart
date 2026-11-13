@@ -1,14 +1,12 @@
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 
-/// Service wrapping [LocalAuthentication] to gate sensitive actions:
-/// unmasking balance, approving transfers, changing PIN.
 class BiometricsService {
   final LocalAuthentication _auth;
 
-  BiometricsService({LocalAuthentication? auth}) : _auth = auth ?? LocalAuthentication();
+  BiometricsService({LocalAuthentication? auth})
+    : _auth = auth ?? LocalAuthentication();
 
-  /// Check if hardware supports biometric authentication and can check biometrics.
   Future<bool> canAuthenticate() async {
     try {
       final canCheck = await _auth.canCheckBiometrics;
@@ -19,7 +17,6 @@ class BiometricsService {
     }
   }
 
-  /// Returns the list of enrolled biometrics (e.g. face, fingerprint).
   Future<List<BiometricType>> getAvailableBiometrics() async {
     try {
       return await _auth.getAvailableBiometrics();
@@ -28,7 +25,6 @@ class BiometricsService {
     }
   }
 
-  /// Triggers biometric authentication with fallback to PIN/device password.
   Future<bool> authenticate({
     String reason = 'Authenticate to access TapPay secure features',
   }) async {
@@ -51,4 +47,3 @@ class BiometricsService {
     }
   }
 }
-
