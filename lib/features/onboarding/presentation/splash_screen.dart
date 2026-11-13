@@ -4,7 +4,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../app/theme/app_colors.dart';
 import 'welcome_screen.dart';
 
-/// TapPay Splash Screen with iconic green brand canvas and centered logo.
 class SplashScreen extends StatefulWidget {
   final bool enableTimer;
   final bool enableAnimations;
@@ -82,9 +81,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: AppColors.splashGreen,
       body: InkWell(
         onTap: _navigateToWelcome,
-        child: Center(
-          child: text,
-        ),
+        child: Center(child: text),
       ),
     );
   }

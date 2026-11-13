@@ -29,8 +29,8 @@ class OnboardingIndicator extends StatelessWidget {
             color: isActive
                 ? AppColors.primaryGreen
                 : isDark
-                    ? Colors.white.withValues(alpha: 0.8)
-                    : const Color(0xFFD1D5DB),
+                ? Colors.white.withValues(alpha: 0.8)
+                : const Color(0xFFD1D5DB),
             borderRadius: BorderRadius.circular(4),
           ),
         );
@@ -38,4 +38,3 @@ class OnboardingIndicator extends StatelessWidget {
     );
   }
 }
-

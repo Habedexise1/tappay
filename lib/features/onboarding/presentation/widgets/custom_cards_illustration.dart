@@ -67,7 +67,12 @@ class CustomCardsIllustration extends StatelessWidget {
     if (animate) {
       backCard = backCard
           .animate(onPlay: (c) => c.repeat(reverse: true))
-          .rotate(begin: 0, end: -0.015, duration: 2600.ms, curve: Curves.easeInOut);
+          .rotate(
+            begin: 0,
+            end: -0.015,
+            duration: 2600.ms,
+            curve: Curves.easeInOut,
+          );
     }
 
     Widget frontCard = Positioned(
@@ -128,7 +133,12 @@ class CustomCardsIllustration extends StatelessWidget {
     if (animate) {
       frontCard = frontCard
           .animate(onPlay: (c) => c.repeat(reverse: true))
-          .rotate(begin: 0, end: 0.015, duration: 2400.ms, curve: Curves.easeInOut);
+          .rotate(
+            begin: 0,
+            end: 0.015,
+            duration: 2400.ms,
+            curve: Curves.easeInOut,
+          );
     }
 
     return SizedBox(
@@ -136,10 +146,7 @@ class CustomCardsIllustration extends StatelessWidget {
       height: 290,
       child: Stack(
         alignment: Alignment.center,
-        children: [
-          backCard,
-          frontCard,
-        ],
+        children: [backCard, frontCard],
       ),
     );
   }
@@ -163,7 +170,7 @@ class _MastercardLogo extends StatelessWidget {
               width: size,
               height: size,
               decoration: const BoxDecoration(
-                color: Color(0xFFEB001B), // Mastercard Red
+                color: Color(0xFFEB001B),
                 shape: BoxShape.circle,
               ),
             ),
@@ -174,7 +181,7 @@ class _MastercardLogo extends StatelessWidget {
               width: size,
               height: size,
               decoration: BoxDecoration(
-                color: const Color(0xFFFF5F00).withValues(alpha: 0.85), // Mastercard Orange
+                color: const Color(0xFFFF5F00).withValues(alpha: 0.85),
                 shape: BoxShape.circle,
               ),
             ),
@@ -199,11 +206,17 @@ class _CardArtworkPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
-    // Motion burst lines
-    canvas.drawLine(Offset(size.width * 0.15, 20), Offset(size.width * 0.05, 12), paint);
-    canvas.drawLine(Offset(size.width * 0.18, 30), Offset(size.width * 0.08, 30), paint);
+    canvas.drawLine(
+      Offset(size.width * 0.15, 20),
+      Offset(size.width * 0.05, 12),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.18, 30),
+      Offset(size.width * 0.08, 30),
+      paint,
+    );
 
-    // Clapping Hands Outline
     final hand1 = Path()
       ..moveTo(size.width * 0.25, 45)
       ..lineTo(size.width * 0.45, 30)
@@ -219,7 +232,6 @@ class _CardArtworkPainter extends CustomPainter {
     canvas.drawPath(hand1, paint);
     canvas.drawPath(hand2, paint);
 
-    // "Agba" script text
     final textSpan = TextSpan(
       text: 'Agba',
       style: TextStyle(

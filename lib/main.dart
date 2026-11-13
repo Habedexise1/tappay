@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:provider/provider.dart';
 
 import 'app/theme/app_theme.dart';
@@ -14,6 +17,7 @@ import 'features/dashboard/presentation/dashboard_controller.dart';
 import 'features/kyc/presentation/kyc_controller.dart';
 import 'features/onboarding/presentation/splash_screen.dart';
 import 'features/qr_transfer/presentation/qr_transfer_controller.dart';
+import 'features/qr_transfer/presentation/screens/qr_scanner_screen.dart';
 import 'features/transactions/data/transaction_repository.dart';
 import 'features/transactions/presentation/transaction_controller.dart';
 import 'features/widgets_bridge/home_widget_service.dart';
@@ -21,13 +25,11 @@ import 'features/widgets_bridge/home_widget_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Core Service Initialization
   final preferencesService = await PreferencesService.init();
   final secureStorageService = SecureStorageService();
   final biometricsService = BiometricsService();
   final transactionRepository = MockTransactionRepository();
 
-  // Initialize Home Screen Widget IPC bridge
   await HomeWidgetService.initialize();
 
   runApp(
@@ -60,13 +62,11 @@ class TapPayRoot extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // Storage & Services
         Provider<PreferencesService>.value(value: preferencesService),
         Provider<SecureStorageService>.value(value: secureStorageService),
         Provider<BiometricsService>.value(value: biometricsService),
         Provider<TransactionRepository>.value(value: transactionRepository),
 
-        // Presentation Controllers (ChangeNotifiers)
         ChangeNotifierProvider<ThemeController>(
           create: (_) => ThemeController(preferencesService),
         ),
@@ -83,14 +83,15 @@ class TapPayRoot extends StatelessWidget {
           ),
         ),
         ChangeNotifierProvider<TransactionController>(
-          create: (_) => TransactionController(
-            repository: transactionRepository,
-          ),
+          create: (_) =>
+              TransactionController(repository: transactionRepository),
         ),
-        ChangeNotifierProvider<KycController>(
-          create: (_) => KycController(),
-        ),
-        ChangeNotifierProxyProvider2<DashboardController, TransactionController, QrTransferController>(
+        ChangeNotifierProvider<KycController>(create: (_) => KycController()),
+        ChangeNotifierProxyProvider2<
+          DashboardController,
+          TransactionController,
+          QrTransferController
+        >(
           create: (ctx) => QrTransferController(
             repository: transactionRepository,
             biometrics: biometricsService,
@@ -112,33 +113,71 @@ class TapPayRoot extends StatelessWidget {
   }
 }
 
-class TapPayApp extends StatelessWidget {
+class TapPayApp extends StatefulWidget {
   final Widget? home;
 
   const TapPayApp({super.key, this.home});
+
+  @override
+  State<TapPayApp> createState() => _TapPayAppState();
+}
+
+class _TapPayAppState extends State<TapPayApp> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  StreamSubscription<Uri?>? _widgetClickSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _initWidgetDeepLinks();
+  }
+
+  Future<void> _initWidgetDeepLinks() async {
+    try {
+      final initialUri = await HomeWidget.initiallyLaunchedFromHomeWidget();
+      _handleDeepLinkUri(initialUri);
+      _widgetClickSubscription = HomeWidget.widgetClicked.listen(
+        _handleDeepLinkUri,
+      );
+    } catch (_) {}
+  }
+
+  void _handleDeepLinkUri(Uri? uri) {
+    if (uri == null) return;
+    if (uri.scheme == 'tappay' && uri.host == 'qr_scanner') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _widgetClickSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final themeController = context.watch<ThemeController>();
 
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'TapPay',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeController.themeMode,
       builder: (context, child) {
-        // App Privacy Shield obscuring screen when in app switcher / background
-        return AppPrivacyShield(
-          child: child ?? const SizedBox.shrink(),
-        );
+        return AppPrivacyShield(child: child ?? const SizedBox.shrink());
       },
-      home: home ?? const SplashScreen(),
+      home: widget.home ?? const SplashScreen(),
     );
   }
 }
 
-/// Initial placeholder screen confirming setup readiness
 class ArchitectureReadyScreen extends StatelessWidget {
   const ArchitectureReadyScreen({super.key});
 
@@ -152,7 +191,9 @@ class ArchitectureReadyScreen extends StatelessWidget {
         title: const Text('TapPay Setup Ready'),
         actions: [
           IconButton(
-            icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
+            icon: Icon(
+              isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+            ),
             tooltip: 'Toggle Theme',
             onPressed: () => themeController.toggleTheme(),
           ),
@@ -171,7 +212,9 @@ class ArchitectureReadyScreen extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withValues(alpha: 0.15),
+                      color: Theme.of(
+                        context,
+                      ).primaryColor.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -197,21 +240,43 @@ class ArchitectureReadyScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildStatusRow(context, 'State Management', 'Provider (MultiProvider)'),
+                        _buildStatusRow(
+                          context,
+                          'State Management',
+                          'Provider (MultiProvider)',
+                        ),
                         const Divider(height: 24),
-                        _buildStatusRow(context, 'Theme Mode', isDark ? 'Dark Mode' : 'Light Mode'),
+                        _buildStatusRow(
+                          context,
+                          'Theme Mode',
+                          isDark ? 'Dark Mode' : 'Light Mode',
+                        ),
                         const Divider(height: 24),
-                        _buildStatusRow(context, 'Privacy Shield', 'Active (Task Switcher)'),
+                        _buildStatusRow(
+                          context,
+                          'Privacy Shield',
+                          'Active (Task Switcher)',
+                        ),
                         const Divider(height: 24),
-                        _buildStatusRow(context, 'Security & Biometrics', 'local_auth & SecureStorage'),
+                        _buildStatusRow(
+                          context,
+                          'Security & Biometrics',
+                          'local_auth & SecureStorage',
+                        ),
                         const Divider(height: 24),
-                        _buildStatusRow(context, 'Native Widgets', 'HomeWidget IPC Bridge'),
+                        _buildStatusRow(
+                          context,
+                          'Native Widgets',
+                          'HomeWidget IPC Bridge',
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
                   AppButton(
-                    text: isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme',
+                    text: isDark
+                        ? 'Switch to Light Theme'
+                        : 'Switch to Dark Theme',
                     variant: AppButtonVariant.secondary,
                     onPressed: () => themeController.toggleTheme(),
                   ),
@@ -229,10 +294,7 @@ class ArchitectureReadyScreen extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Flexible(
-          child: Text(
-            title,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          child: Text(title, style: Theme.of(context).textTheme.bodyMedium),
         ),
         const SizedBox(width: 8),
         Flexible(
@@ -240,9 +302,9 @@ class ArchitectureReadyScreen extends StatelessWidget {
             value,
             textAlign: TextAlign.end,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).primaryColor,
-                ),
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).primaryColor,
+            ),
           ),
         ),
       ],

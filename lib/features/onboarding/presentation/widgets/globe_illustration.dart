@@ -5,19 +5,29 @@ import '../../../../app/theme/app_colors.dart';
 class GlobeIllustration extends StatelessWidget {
   final bool animate;
 
-  const GlobeIllustration({
-    super.key,
-    this.animate = true,
-  });
+  const GlobeIllustration({super.key, this.animate = true});
 
-  Widget _wrap(Widget child, {required double moveX, required double moveY, required int durationMs}) {
+  Widget _wrap(
+    Widget child, {
+    required double moveX,
+    required double moveY,
+    required int durationMs,
+  }) {
     if (!animate) return child;
     var a = child.animate(onPlay: (c) => c.repeat(reverse: true));
     if (moveX != 0) {
-      a = a.moveX(begin: 0, end: moveX, duration: Duration(milliseconds: durationMs));
+      a = a.moveX(
+        begin: 0,
+        end: moveX,
+        duration: Duration(milliseconds: durationMs),
+      );
     }
     if (moveY != 0) {
-      a = a.moveY(begin: 0, end: moveY, duration: Duration(milliseconds: durationMs));
+      a = a.moveY(
+        begin: 0,
+        end: moveY,
+        duration: Duration(milliseconds: durationMs),
+      );
     }
     return a;
   }
@@ -31,15 +41,17 @@ class GlobeIllustration extends StatelessWidget {
         color: AppColors.primaryYellow,
         shape: BoxShape.circle,
       ),
-      child: CustomPaint(
-        painter: _GlobeContinentsPainter(),
-      ),
+      child: CustomPaint(painter: _GlobeContinentsPainter()),
     );
 
     if (animate) {
       globe = globe
           .animate(onPlay: (c) => c.repeat(reverse: true))
-          .scale(begin: const Offset(0.98, 0.98), end: const Offset(1.02, 1.02), duration: 2500.ms);
+          .scale(
+            begin: const Offset(0.98, 0.98),
+            end: const Offset(1.02, 1.02),
+            duration: 2500.ms,
+          );
     }
 
     return SizedBox(
@@ -48,10 +60,8 @@ class GlobeIllustration extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Main Yellow Globe with custom painted continental lines
           globe,
 
-          // 1. Top Euro (€)
           Positioned(
             top: 10,
             child: _wrap(
@@ -62,7 +72,6 @@ class GlobeIllustration extends StatelessWidget {
             ),
           ),
 
-          // 2. Left Pound (£)
           Positioned(
             left: 20,
             top: 55,
@@ -74,7 +83,6 @@ class GlobeIllustration extends StatelessWidget {
             ),
           ),
 
-          // 3. Bottom-Left Naira (₦)
           Positioned(
             left: 28,
             bottom: 50,
@@ -86,7 +94,6 @@ class GlobeIllustration extends StatelessWidget {
             ),
           ),
 
-          // 4. Right Bitcoin (₿)
           Positioned(
             right: 20,
             top: 85,
@@ -98,7 +105,6 @@ class GlobeIllustration extends StatelessWidget {
             ),
           ),
 
-          // 5. Bottom Dollar ($)
           Positioned(
             bottom: 12,
             right: 75,
@@ -162,13 +168,33 @@ class _GlobeContinentsPainter extends CustomPainter {
 
     final path1 = Path()
       ..moveTo(size.width * 0.25, size.height * 0.18)
-      ..quadraticBezierTo(size.width * 0.40, size.height * 0.24, size.width * 0.35, size.height * 0.40)
-      ..quadraticBezierTo(size.width * 0.30, size.height * 0.55, size.width * 0.50, size.height * 0.60)
-      ..quadraticBezierTo(size.width * 0.55, size.height * 0.75, size.width * 0.40, size.height * 0.90);
+      ..quadraticBezierTo(
+        size.width * 0.40,
+        size.height * 0.24,
+        size.width * 0.35,
+        size.height * 0.40,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.30,
+        size.height * 0.55,
+        size.width * 0.50,
+        size.height * 0.60,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.55,
+        size.height * 0.75,
+        size.width * 0.40,
+        size.height * 0.90,
+      );
 
     final path2 = Path()
       ..moveTo(size.width * 0.50, size.height * 0.15)
-      ..quadraticBezierTo(size.width * 0.70, size.height * 0.22, size.width * 0.85, size.height * 0.18);
+      ..quadraticBezierTo(
+        size.width * 0.70,
+        size.height * 0.22,
+        size.width * 0.85,
+        size.height * 0.18,
+      );
 
     canvas.drawPath(path1, paint);
     canvas.drawPath(path2, paint);

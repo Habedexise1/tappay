@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// Centralized route paths and route name constants for TapPay.
 class AppRoutes {
   AppRoutes._();
 
@@ -28,8 +27,6 @@ class AppRoutes {
   static const String receipt = '/transactions/receipt';
 }
 
-/// Global GoRouter instance supporting standard navigation and deep links:
-/// e.g. "tappay://qr_scanner" directly launches into AppRoutes.qrScanner.
 class AppRouter {
   AppRouter._();
 
@@ -46,18 +43,15 @@ class AppRouter {
           path: AppRoutes.home,
           builder: (context, state) => initialHomeWidget,
         ),
-        // Deep-link alias for native home widget tap
+
         GoRoute(
           path: '/qr_scanner',
           redirect: (context, state) => AppRoutes.qrScanner,
         ),
       ],
       errorBuilder: (context, state) => Scaffold(
-        body: Center(
-          child: Text('Page not found: ${state.uri.toString()}'),
-        ),
+        body: Center(child: Text('Page not found: ${state.uri.toString()}')),
       ),
     );
   }
 }
-
