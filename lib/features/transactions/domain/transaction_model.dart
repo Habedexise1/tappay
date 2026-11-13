@@ -7,10 +7,7 @@ enum TransactionStatus {
   const TransactionStatus(this.label);
 }
 
-enum TransactionType {
-  inflow,
-  outflow,
-}
+enum TransactionType { inflow, outflow }
 
 class TransactionModel {
   final String id;
@@ -69,4 +66,3 @@ class TransactionModel {
     );
   }
 }
-

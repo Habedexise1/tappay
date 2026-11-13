@@ -2,8 +2,6 @@ import 'package:flutter/foundation.dart';
 import '../../../core/utils/view_state.dart';
 import '../domain/kyc_models.dart';
 
-/// Provider controller managing KYC onboarding flows:
-/// Employment info, ID capture, and Selfie face-alignment verification.
 class KycController extends ChangeNotifier {
   KycProfile _profile = const KycProfile();
   KycProfile get profile => _profile;
@@ -64,10 +62,11 @@ class KycController extends ChangeNotifier {
   }
 
   Future<bool> submitVerification() async {
-    _submissionState = const Loading('Verifying credentials with automated KYC engine...');
+    _submissionState = const Loading(
+      'Verifying credentials with automated KYC engine...',
+    );
     notifyListeners();
 
-    // 1.5s simulated network processing
     await Future.delayed(const Duration(milliseconds: 1500));
 
     _profile = _profile.copyWith(isVerified: true);
@@ -85,4 +84,3 @@ class KycController extends ChangeNotifier {
     notifyListeners();
   }
 }
-

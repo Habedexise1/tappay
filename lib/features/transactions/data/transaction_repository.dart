@@ -81,7 +81,6 @@ class MockTransactionRepository implements TransactionRepository {
 
   @override
   Future<List<TransactionModel>> getTransactions() async {
-    // 600ms latency for smooth ledger loading
     await Future.delayed(const Duration(milliseconds: 600));
     return List.unmodifiable(_mockTransactions);
   }
@@ -93,7 +92,6 @@ class MockTransactionRepository implements TransactionRepository {
     required String note,
     required String idempotencyKey,
   }) async {
-    // 1.5s simulated network delay specified in assessment requirement
     await Future.delayed(const Duration(milliseconds: 1500));
 
     final newTx = TransactionModel(
@@ -104,7 +102,8 @@ class MockTransactionRepository implements TransactionRepository {
       date: DateTime.now(),
       status: TransactionStatus.completed,
       type: TransactionType.outflow,
-      referenceNumber: 'REF-${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}',
+      referenceNumber:
+          'REF-${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}',
       fee: 0.00,
       recipientName: recipient,
       note: note.isNotEmpty ? note : 'QR Transfer',
@@ -114,4 +113,3 @@ class MockTransactionRepository implements TransactionRepository {
     return newTx;
   }
 }
-

@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-/// QR Payload structure for TapPay transfers.
 class QrTransferPayload {
   final String recipient;
   final String accountHandle;
@@ -14,7 +13,6 @@ class QrTransferPayload {
     this.note,
   });
 
-  /// Serialize to standard JSON string for QR generator
   String toRawString() {
     return jsonEncode({
       'app': 'tappay',
@@ -25,7 +23,6 @@ class QrTransferPayload {
     });
   }
 
-  /// Parse from scanned QR raw string
   static QrTransferPayload? fromRawString(String raw) {
     try {
       if (raw.startsWith('{') && raw.endsWith('}')) {
@@ -33,11 +30,13 @@ class QrTransferPayload {
         return QrTransferPayload(
           recipient: data['recipient'] ?? 'TapPay User',
           accountHandle: data['handle'] ?? '@user',
-          amount: data['amount'] != null ? (data['amount'] as num).toDouble() : null,
+          amount: data['amount'] != null
+              ? (data['amount'] as num).toDouble()
+              : null,
           note: data['note'],
         );
       }
-      // Fallback for simple handle string
+
       return QrTransferPayload(
         recipient: raw,
         accountHandle: raw.startsWith('@') ? raw : '@$raw',
@@ -47,4 +46,3 @@ class QrTransferPayload {
     }
   }
 }
-

@@ -7,7 +7,6 @@ import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transaction_controller.dart';
 import '../domain/qr_payload.dart';
 
-/// Provider controller managing QR Scanner, Generator, and Idempotent Payment Transfers.
 class QrTransferController extends ChangeNotifier {
   final TransactionRepository repository;
   final BiometricsService biometrics;
@@ -21,7 +20,6 @@ class QrTransferController extends ChangeNotifier {
     required this.transactionController,
   });
 
-  // --- States ---
   ViewState<TransactionModel> _transferState = const Initial();
   ViewState<TransactionModel> get transferState => _transferState;
 
@@ -31,7 +29,6 @@ class QrTransferController extends ChangeNotifier {
   bool _isTorchOn = false;
   bool get isTorchOn => _isTorchOn;
 
-  // Idempotency tracking to prevent duplicate transactions
   String? _inFlightIdempotencyKey;
 
   void toggleTorch() {
@@ -62,11 +59,6 @@ class QrTransferController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Execute money transfer with:
-  /// 1. Biometric / PIN authorization check
-  /// 2. Idempotent submission lock
-  /// 3. Simulated 1.5s network delay
-  /// 4. Synchronized balance deduction & ledger update
   Future<TransactionModel?> executeTransfer({
     required double amount,
     required String note,
@@ -79,7 +71,9 @@ class QrTransferController extends ChangeNotifier {
     }
 
     if (amount <= 0) {
-      _transferState = const Failure('Transfer amount must be greater than zero');
+      _transferState = const Failure(
+        'Transfer amount must be greater than zero',
+      );
       notifyListeners();
       return null;
     }
@@ -90,26 +84,26 @@ class QrTransferController extends ChangeNotifier {
       return null;
     }
 
-    // Step 1: Biometric Authorization Gate
     final authenticated = await biometrics.authenticate(
-      reason: 'Confirm transfer of \$${amount.toStringAsFixed(2)} to ${payload.recipient}',
+      reason:
+          'Confirm transfer of \$${amount.toStringAsFixed(2)} to ${payload.recipient}',
     );
 
     if (!authenticated) {
-      _transferState = const Failure('Biometric verification cancelled or failed');
+      _transferState = const Failure(
+        'Biometric verification cancelled or failed',
+      );
       notifyListeners();
       return null;
     }
 
-    // Step 2: Idempotency Lock
-    final idempotencyKey = 'idemp_${payload.accountHandle}_${amount}_${DateTime.now().millisecondsSinceEpoch}';
+    final idempotencyKey =
+        'idemp_${payload.accountHandle}_${amount}_${DateTime.now().millisecondsSinceEpoch}';
     if (_inFlightIdempotencyKey != null) {
-      // Guard against double submit
       return null;
     }
     _inFlightIdempotencyKey = idempotencyKey;
 
-    // Step 3: Pending state with 1.5s simulated network latency
     _transferState = const Loading('Processing secure transfer...');
     notifyListeners();
 
@@ -121,8 +115,10 @@ class QrTransferController extends ChangeNotifier {
         idempotencyKey: idempotencyKey,
       );
 
-      // Step 4: Synchronize state across Dashboard and Transactions
-      await dashboardController.deductBalance(amount, recipient: payload.recipient);
+      await dashboardController.deductBalance(
+        amount,
+        recipient: payload.recipient,
+      );
       transactionController.addTransaction(tx);
 
       _transferState = Success(tx);
@@ -144,4 +140,3 @@ class QrTransferController extends ChangeNotifier {
     notifyListeners();
   }
 }
-

@@ -6,7 +6,6 @@ import '../../../core/utils/view_state.dart';
 import '../data/transaction_repository.dart';
 import '../domain/transaction_model.dart';
 
-/// Provider controller managing Transaction history, filtering, detail views, and receipt sharing.
 class TransactionController extends ChangeNotifier {
   final TransactionRepository repository;
 
@@ -29,10 +28,14 @@ class TransactionController extends ChangeNotifier {
   List<TransactionModel> get filteredTransactions {
     if (_selectedCategory == 'All') return _allTransactions;
     if (_selectedCategory == 'Income') {
-      return _allTransactions.where((t) => t.type == TransactionType.inflow).toList();
+      return _allTransactions
+          .where((t) => t.type == TransactionType.inflow)
+          .toList();
     }
     if (_selectedCategory == 'Expense') {
-      return _allTransactions.where((t) => t.type == TransactionType.outflow).toList();
+      return _allTransactions
+          .where((t) => t.type == TransactionType.outflow)
+          .toList();
     }
     if (_selectedCategory == 'Transfer') {
       return _allTransactions.where((t) => t.category == 'Transfer').toList();
@@ -70,18 +73,17 @@ class TransactionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Add a newly executed transfer to the top of the history list.
   void addTransaction(TransactionModel tx) {
     _allTransactions.insert(0, tx);
     _transactionsState = Success(_allTransactions);
     notifyListeners();
   }
 
-  /// System share action for receipt details.
   Future<void> shareReceipt(TransactionModel tx) async {
-    final text = '''
+    final text =
+        '''
 ================================
-         TapPay Receipt         
+         TapPay Receipt
 ================================
 Reference: ${tx.referenceNumber}
 Recipient: ${tx.recipientName}
@@ -97,4 +99,3 @@ Verified by TapPay Secure Engine
     await Share.share(text, subject: 'TapPay Receipt - ${tx.referenceNumber}');
   }
 }
-
