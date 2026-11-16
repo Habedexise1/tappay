@@ -13,7 +13,9 @@ import '../../../auth/presentation/screens/change_password_screen.dart';
 import '../../../auth/presentation/screens/two_factor/two_factor_screen.dart';
 import '../../../auth/presentation/widgets/change_pin_sheet.dart';
 import '../../../kyc/presentation/kyc_controller.dart';
-import '../../../kyc/presentation/screens/image_verification_intro_screen.dart';
+import '../../../dashboard/presentation/dashboard_controller.dart';
+import '../../../kyc/domain/kyc_models.dart';
+import '../../../kyc/presentation/kyc_navigation.dart';
 import '../../../onboarding/presentation/welcome_screen.dart';
 import '../../domain/settings_models.dart';
 import '../settings_controller.dart';
@@ -83,6 +85,12 @@ class _SettingsHomeScreenState extends State<SettingsHomeScreen> {
     }
   }
 
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> _logOut() async {
     final confirmed = await confirmDestructiveAction(
       context,
@@ -103,8 +111,13 @@ class _SettingsHomeScreenState extends State<SettingsHomeScreen> {
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsController>();
     final auth = context.watch<AuthController>();
-    final isVerified = context.select<KycController, bool>(
-      (k) => k.profile.isVerified,
+    final kycFlow = KycFlow.forCurrencyCode(
+      context.select<DashboardController, String>(
+        (d) => d.selectedCurrency.code,
+      ),
+    );
+    final kycStatus = context.select<KycController, KycStatus>(
+      (k) => k.statusFor(kycFlow),
     );
     final theme = context.watch<ThemeController>();
     final profile = settings.profile;
@@ -136,16 +149,17 @@ class _SettingsHomeScreenState extends State<SettingsHomeScreen> {
                 svgAsset: AppAssets.iconVerify,
                 label: 'Account Verification',
                 trailing: StatusChip(
-                  label: isVerified ? 'Verified' : 'Unverified',
-                  positive: isVerified,
+                  key: const ValueKey('kyc_status_chip'),
+                  label: kycStatus.label,
+                  positive: kycStatus == KycStatus.verified,
                 ),
-                onTap: isVerified
-                    ? () => _open(const AccountInfoScreen())
-                    : () => _openFullScreen(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const ImageVerificationIntroScreen(),
-                        ),
-                      ),
+                onTap: switch (kycStatus) {
+                  KycStatus.verified => () => _open(const AccountInfoScreen()),
+                  KycStatus.inReview => () => _showSnack(
+                    'Your ${kycFlow.label} KYC is being reviewed. We will notify you when it is complete.',
+                  ),
+                  _ => () => KycNavigator.start(context, kycFlow),
+                },
               ),
               SettingsRow(
                 svgAsset: AppAssets.iconPeople,
@@ -224,10 +238,7 @@ class _SettingsHomeScreenState extends State<SettingsHomeScreen> {
                 svgAsset: AppAssets.iconReceiptText,
                 label: 'Terms and Conditions',
               ),
-              SettingsRow(
-                svgAsset: AppAssets.iconSupport,
-                label: 'Support',
-              ),
+              SettingsRow(svgAsset: AppAssets.iconSupport, label: 'Support'),
             ],
           ),
           const SizedBox(height: 20),

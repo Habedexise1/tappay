@@ -56,4 +56,5 @@ abstract final class AppAssets {
   static const String navSettingsInactive = '$_svgsDir/setting1.svg';
 
   static const String lottieSuccess = 'assets/lottie/success.json';
+  static const String lottieFailed = 'assets/lottie/failed.json';
 }

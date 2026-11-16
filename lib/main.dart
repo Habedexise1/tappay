@@ -14,7 +14,12 @@ import 'core/widgets/app_button.dart';
 import 'core/widgets/app_card.dart';
 import 'features/auth/presentation/auth_controller.dart';
 import 'features/dashboard/presentation/dashboard_controller.dart';
+import 'features/kyc/data/device_camera_permission_service.dart';
+import 'features/kyc/data/device_kyc_media_source.dart';
+import 'features/kyc/data/mock_kyc_repository.dart';
+import 'features/kyc/domain/kyc_repository.dart';
 import 'features/kyc/presentation/kyc_controller.dart';
+import 'features/kyc/presentation/selfie_camera.dart';
 import 'features/onboarding/presentation/splash_screen.dart';
 import 'features/qr_transfer/presentation/qr_transfer_controller.dart';
 import 'features/qr_transfer/presentation/screens/qr_scanner_screen.dart';
@@ -51,6 +56,12 @@ class TapPayRoot extends StatelessWidget {
   final TransactionRepository transactionRepository;
   final Widget? initialHome;
 
+  /// KYC device integrations; tests inject fakes, the app uses the defaults.
+  final KycRepository? kycRepository;
+  final KycMediaSource? kycMediaSource;
+  final CameraPermissionService? cameraPermissionService;
+  final SelfieCameraFactory? selfieCameraFactory;
+
   const TapPayRoot({
     super.key,
     required this.preferencesService,
@@ -58,6 +69,10 @@ class TapPayRoot extends StatelessWidget {
     required this.biometricsService,
     required this.transactionRepository,
     this.initialHome,
+    this.kycRepository,
+    this.kycMediaSource,
+    this.cameraPermissionService,
+    this.selfieCameraFactory,
   });
 
   @override
@@ -68,6 +83,12 @@ class TapPayRoot extends StatelessWidget {
         Provider<SecureStorageService>.value(value: secureStorageService),
         Provider<BiometricsService>.value(value: biometricsService),
         Provider<TransactionRepository>.value(value: transactionRepository),
+        Provider<CameraPermissionService>.value(
+          value: cameraPermissionService ?? DeviceCameraPermissionService(),
+        ),
+        Provider<SelfieCameraFactory>.value(
+          value: selfieCameraFactory ?? PluginSelfieCamera.new,
+        ),
 
         ChangeNotifierProvider<ThemeController>(
           create: (_) => ThemeController(preferencesService),
@@ -88,7 +109,13 @@ class TapPayRoot extends StatelessWidget {
           create: (_) =>
               TransactionController(repository: transactionRepository),
         ),
-        ChangeNotifierProvider<KycController>(create: (_) => KycController()),
+        ChangeNotifierProvider<KycController>(
+          create: (_) => KycController(
+            repository:
+                kycRepository ?? MockKycRepository(prefs: preferencesService),
+            media: kycMediaSource ?? DeviceKycMediaSource(),
+          ),
+        ),
         ChangeNotifierProxyProvider<AuthController, SettingsController>(
           create: (_) => SettingsController(
             repository: MockSettingsRepository(prefs: preferencesService),

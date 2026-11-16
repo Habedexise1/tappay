@@ -14,9 +14,6 @@ import 'package:tappay/features/dashboard/presentation/screens/dashboard_screen.
 import 'package:tappay/features/dashboard/presentation/widgets/enter_amount_sheet.dart';
 import 'package:tappay/features/dashboard/presentation/screens/send_money_beneficiaries_screen.dart';
 import 'package:tappay/features/dashboard/presentation/screens/send_money_recipient_screen.dart';
-import 'package:tappay/features/kyc/presentation/screens/image_verification_capture_screen.dart';
-import 'package:tappay/features/kyc/presentation/screens/image_verification_intro_screen.dart';
-import 'package:tappay/features/kyc/presentation/screens/image_verification_thank_you_screen.dart';
 import 'package:tappay/features/transactions/data/transaction_repository.dart';
 import 'package:tappay/main.dart';
 
@@ -150,35 +147,6 @@ void main() {
       await tester.pumpAndSettle();
     },
   );
-
-  testWidgets('Image verification intro, capture, and thank you flow works', (
-    WidgetTester tester,
-  ) async {
-    final prefs = await _initMockPrefs();
-    await tester.pumpWidget(
-      _wrapWithApp(prefs, const ImageVerificationIntroScreen()),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Image verification'), findsOneWidget);
-    expect(find.text('Take a selfie'), findsOneWidget);
-
-    await tester.tap(find.text('Take a selfie'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(ImageVerificationCaptureScreen), findsOneWidget);
-
-    await tester.tap(find.byKey(const ValueKey('capture_selfie_button')));
-    await tester.pump(const Duration(milliseconds: 350));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(ImageVerificationThankYouScreen), findsOneWidget);
-    expect(find.text('Thank you!'), findsOneWidget);
-    expect(find.text('Continue'), findsOneWidget);
-
-    await tester.tap(find.text('Continue'));
-    await tester.pumpAndSettle();
-  });
 
   testWidgets(
     'Dashboard Light & Dark render, currency sheet swaps, and Send Money succeeds',

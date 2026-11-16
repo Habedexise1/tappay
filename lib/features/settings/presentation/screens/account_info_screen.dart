@@ -5,6 +5,8 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../core/utils/view_state.dart';
 import '../../../../core/widgets/settings_page_scaffold.dart';
 import '../../../../core/widgets/skeleton_loader.dart';
+import '../../../dashboard/presentation/dashboard_controller.dart';
+import '../../../kyc/domain/kyc_models.dart';
 import '../../../kyc/presentation/kyc_controller.dart';
 import '../settings_controller.dart';
 import '../widgets/settings_widgets.dart';
@@ -15,9 +17,14 @@ class AccountInfoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsController>();
-    final isVerified = context.select<KycController, bool>(
-      (k) => k.profile.isVerified,
+    final kycStatus = context.select<KycController, KycStatus>(
+      (k) => k.statusFor(
+        KycFlow.forCurrencyCode(
+          context.read<DashboardController>().selectedCurrency.code,
+        ),
+      ),
     );
+    final isVerified = kycStatus == KycStatus.verified;
 
     final body = switch (settings.accountState) {
       Success(:final data) => Column(
@@ -36,11 +43,8 @@ class AccountInfoScreen extends StatelessWidget {
           _InfoRow(label: 'Account Name', value: data.accountName),
           _InfoRow(
             label: 'Verification status',
-            value: isVerified ? 'Verified' : 'Unverified',
-            trailing: StatusChip(
-              label: isVerified ? 'Verified' : 'Unverified',
-              positive: isVerified,
-            ),
+            value: kycStatus.label,
+            trailing: StatusChip(label: kycStatus.label, positive: isVerified),
           ),
         ],
       ),

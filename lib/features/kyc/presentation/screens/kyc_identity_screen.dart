@@ -1,304 +1,124 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../app/theme/app_colors.dart';
-import '../../../../core/utils/date_formatter.dart';
-import '../../../../core/utils/responsive_utils.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_card.dart';
-import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../domain/kyc_models.dart';
 import '../kyc_controller.dart';
-import 'kyc_selfie_screen.dart';
+import '../kyc_navigation.dart';
+import '../widgets/kyc_widgets.dart';
 
-class KycIdentityScreen extends StatefulWidget {
+/// Figma "Identity verification" frames: date of birth, means of ID and a
+/// front-view picture of the ID.
+class KycIdentityScreen extends StatelessWidget {
   const KycIdentityScreen({super.key});
 
-  @override
-  State<KycIdentityScreen> createState() => _KycIdentityScreenState();
-}
-
-class _KycIdentityScreenState extends State<KycIdentityScreen> {
-  late final TextEditingController _idNumberController;
-
-  @override
-  void initState() {
-    super.initState();
-    final initialNumber = context.read<KycController>().profile.idNumber;
-    _idNumberController = TextEditingController(text: initialNumber);
-  }
-
-  @override
-  void dispose() {
-    _idNumberController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickDateOfBirth(KycController controller) async {
-    final now = DateTime.now();
-    final initial =
-        controller.profile.dateOfBirth ??
-        DateTime(now.year - 24, now.month, now.day);
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime(1920),
-      lastDate: DateTime(now.year - 18, now.month, now.day),
-    );
-    if (picked != null) {
-      controller.updateDateOfBirth(picked);
-    }
-  }
+  static final _dobFormat = DateFormat('dd/MM/yyyy');
 
   @override
   Widget build(BuildContext context) {
-    final kycController = context.watch<KycController>();
-    final profile = kycController.profile;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? Colors.white : AppColors.lightTextPrimary;
-    final textSecondary = isDark
-        ? AppColors.darkTextSecondary
-        : AppColors.lightTextSecondary;
+    final kyc = context.watch<KycController>();
+    final app = kyc.application;
+    const slot = KycDocumentSlot.idFront;
+    final dob = app.dateOfBirth;
+    final dobError = dob == null ? null : KycRules.validateDateOfBirth(dob);
 
-    final canProceed =
-        profile.dateOfBirth != null &&
-        profile.idNumber.trim().length >= 5 &&
-        kycController.isIdFrontUploaded;
+    Future<void> pickDob() async {
+      final picked = await _showDateOfBirthSheet(context, initial: dob);
+      if (picked != null) kyc.setDateOfBirth(picked);
+    }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'KYC Verification (2/3)',
-          style: TextStyle(
-            fontFamily: 'Gordita',
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
+    Future<void> pickId() async {
+      final picked = await showKycOptionSheet<MeansOfId>(
+        context: context,
+        title: 'Means of ID',
+        options: MeansOfId.values,
+        labelOf: (m) => m.label,
+        selected: app.meansOfId,
+      );
+      if (picked != null) kyc.setMeansOfId(picked);
+    }
+
+    Future<void> upload() async {
+      final origin = await showKycMediaOriginSheet(context, allowFiles: false);
+      if (origin != null) await kyc.attach(slot, origin);
+    }
+
+    return KycStepScaffold(
+      title: 'Identity verification',
+      subtitle: 'Please provide the information, let us verify your identity',
+      footerHint: dobError != null ? null : kyc.blockerFor(KycStep.identity),
+      onContinue: kyc.canContinue(KycStep.identity)
+          ? () => KycNavigator.next(context, KycStep.identity)
+          : null,
+      body: Column(
+        children: [
+          KycSelectField(
+            key: const ValueKey('kyc_dob_field'),
+            label: 'Date of birth',
+            hint: 'DD/MM/YYYY',
+            value: dob == null ? null : _dobFormat.format(dob),
+            icon: Icons.calendar_month_outlined,
+            errorText: dobError,
+            onTap: pickDob,
           ),
-        ),
-      ),
-      body: SafeArea(
-        child: ResponsiveContainer(
-          maxWidth: 520,
-          padding: const EdgeInsets.all(24),
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Identity Details',
-                  style: TextStyle(
-                    fontFamily: 'Gordita',
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Verify your legal date of birth and upload a valid government ID.',
-                  style: TextStyle(
-                    fontFamily: 'Gordita',
-                    fontSize: 13,
-                    color: textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                Text(
-                  'Date of Birth',
-                  style: TextStyle(
-                    fontFamily: 'Gordita',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                AppCard(
-                  onTap: () => _pickDateOfBirth(kycController),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_today_rounded,
-                        color: AppColors.primaryGreen,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          profile.dateOfBirth != null
-                              ? DateFormatter.formatFull(profile.dateOfBirth!)
-                              : 'Select Date of Birth',
-                          style: TextStyle(
-                            fontFamily: 'Gordita',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: profile.dateOfBirth != null
-                                ? textPrimary
-                                : textSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                Text(
-                  'Document Type',
-                  style: TextStyle(
-                    fontFamily: 'Gordita',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ...IdType.values.map((idType) {
-                  final selected = profile.idType == idType;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: AppCard(
-                      onTap: () => kycController.updateIdType(idType),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      borderSide: selected
-                          ? const BorderSide(
-                              color: AppColors.primaryGreen,
-                              width: 1.5,
-                            )
-                          : null,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  idType.label,
-                                  style: TextStyle(
-                                    fontFamily: 'Gordita',
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  idType.description,
-                                  style: TextStyle(
-                                    fontFamily: 'Gordita',
-                                    fontSize: 12,
-                                    color: textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Icon(
-                            selected
-                                ? Icons.check_circle_rounded
-                                : Icons.radio_button_unchecked_rounded,
-                            color: selected
-                                ? AppColors.primaryGreen
-                                : textSecondary,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
-                const SizedBox(height: 12),
-
-                AppTextField(
-                  label: 'ID Document Number',
-                  hintText: 'Enter document number',
-                  controller: _idNumberController,
-                  prefixIcon: const Icon(Icons.badge_outlined),
-                  onChanged: kycController.updateIdNumber,
-                ),
-                const SizedBox(height: 20),
-
-                AppCard(
-                  onTap: () => kycController.simulateUploadIdFront(),
-                  borderSide: kycController.isIdFrontUploaded
-                      ? const BorderSide(
-                          color: AppColors.primaryGreen,
-                          width: 1.5,
-                        )
-                      : null,
-                  child: Row(
-                    children: [
-                      Icon(
-                        kycController.isIdFrontUploaded
-                            ? Icons.verified_user_rounded
-                            : Icons.add_a_photo_outlined,
-                        color: kycController.isIdFrontUploaded
-                            ? AppColors.primaryGreen
-                            : textSecondary,
-                        size: 28,
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              kycController.isIdFrontUploaded
-                                  ? (profile.idFrontPath ?? 'id_front_scan.jpg')
-                                  : 'Capture Front of ${profile.idType.label}',
-                              style: TextStyle(
-                                fontFamily: 'Gordita',
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              kycController.isIdFrontUploaded
-                                  ? 'Front view image captured'
-                                  : 'Ensure all 4 corners are clearly visible',
-                              style: TextStyle(
-                                fontFamily: 'Gordita',
-                                fontSize: 12,
-                                color: kycController.isIdFrontUploaded
-                                    ? AppColors.primaryGreen
-                                    : textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 28),
-
-                AppButton(
-                  text: 'Continue to Selfie',
-                  onPressed: canProceed
-                      ? () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const KycSelfieScreen(),
-                            ),
-                          );
-                        }
-                      : null,
-                ),
-              ],
-            ),
+          const SizedBox(height: 20),
+          KycSelectField(
+            key: const ValueKey('kyc_means_of_id_field'),
+            label: 'Means of ID',
+            value: app.meansOfId?.label,
+            onTap: pickId,
           ),
-        ),
+          const SizedBox(height: 20),
+          KycUploadBox(
+            key: const ValueKey('kyc_id_front_upload'),
+            caption: 'Upload a front-view picture of your ID',
+            height: 169,
+            document: app.idFront,
+            state: kyc.attachState(slot),
+            onTap: upload,
+            onRemove: () => kyc.removeDocument(slot),
+          ),
+        ],
       ),
     );
   }
+}
+
+/// Figma "Date of birth" sheet with a month calendar.
+Future<DateTime?> _showDateOfBirthSheet(
+  BuildContext context, {
+  DateTime? initial,
+}) {
+  final now = DateTime.now();
+  final latest = DateTime(now.year - KycRules.minimumAge, now.month, now.day);
+  final first = DateTime(now.year - 120);
+  final start = initial ?? DateTime(latest.year - 7, latest.month, 1);
+
+  return showAppBottomSheet<DateTime>(
+    context: context,
+    useRootNavigator: true,
+    title: 'Date of birth',
+    builder: (sheetContext) {
+      final theme = Theme.of(sheetContext);
+      return Theme(
+        data: theme.copyWith(
+          colorScheme: theme.colorScheme.copyWith(
+            primary: AppColors.primaryGreen,
+            onPrimary: AppColors.lightTextPrimary,
+          ),
+        ),
+        child: CalendarDatePicker(
+          initialDate: start.isAfter(latest) ? latest : start,
+          firstDate: first,
+          lastDate: latest,
+          initialCalendarMode: initial == null
+              ? DatePickerMode.year
+              : DatePickerMode.day,
+          onDateChanged: (d) => Navigator.of(sheetContext).pop(d),
+        ),
+      );
+    },
+  );
 }

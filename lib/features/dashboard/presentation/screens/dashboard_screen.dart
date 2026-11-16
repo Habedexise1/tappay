@@ -15,7 +15,8 @@ import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/flag_icon.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../kyc/presentation/kyc_controller.dart';
-import '../../../kyc/presentation/screens/image_verification_intro_screen.dart';
+import '../../../kyc/domain/kyc_models.dart';
+import '../../../kyc/presentation/kyc_navigation.dart';
 import '../../../qr_transfer/presentation/screens/qr_generator_screen.dart';
 import '../../../qr_transfer/presentation/screens/qr_scanner_screen.dart';
 import '../../../settings/presentation/settings_tab.dart';
@@ -517,6 +518,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ? 'Jimmy'
         : auth.signUpDraft.firstName.trim();
     final currency = dashboard.selectedCurrency;
+    final kycFlow = KycFlow.forCurrencyCode(currency.code);
+    final kycStatus = kyc.statusFor(kycFlow);
     final transactions = transactionsController.filteredTransactions;
 
     return SingleChildScrollView(
@@ -693,16 +696,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
-          if (!kyc.profile.isVerified) ...[
+          if (kycStatus != KycStatus.verified) ...[
             const SizedBox(height: 24),
             InkWell(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const ImageVerificationIntroScreen(),
-                  ),
-                );
-              },
+              key: const ValueKey('dashboard_kyc_banner'),
+              onTap: kycStatus == KycStatus.inReview
+                  ? null
+                  : () => KycNavigator.start(context, kycFlow),
               borderRadius: BorderRadius.circular(14),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(14),
@@ -722,7 +722,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Complete your account setup',
+                                  kycStatus == KycStatus.inReview
+                                      ? 'Verification in review'
+                                      : 'Complete your account setup',
                                   style: TextStyle(
                                     fontFamily: 'Gordita',
                                     fontSize: 14,
@@ -732,7 +734,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Make all transactions by completing your KYC',
+                                  kycStatus == KycStatus.inReview
+                                      ? "We'll notify you once your ${kycFlow.label} KYC is approved"
+                                      : kycFlow == KycFlow.gbpEur
+                                      ? 'Complete GBP/EUR KYC to transact in ${currency.code}'
+                                      : 'Make all transactions by completing your KYC',
                                   style: TextStyle(
                                     fontFamily: 'Gordita',
                                     fontSize: 11,

@@ -68,6 +68,8 @@
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>TapPay requires camera access for QR code scanning and KYC identity verification.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>TapPay needs access to your photos so you can upload ID documents and utility bills for verification.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>TapPay requires Face ID to secure your balance and authorize transactions.</string>
 	<key>CFBundleURLTypes</key>
