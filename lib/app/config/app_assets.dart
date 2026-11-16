@@ -49,5 +49,11 @@ abstract final class AppAssets {
   static const String iconVerify = '$_svgsDir/verify.svg';
   static const String iconMoon = '$_svgsDir/Moon.svg';
 
+  static const String navHomeActive = '$_svgsDir/home.svg';
+  static const String navHomeInactive = '$_svgsDir/home-2.svg';
+  static const String navP2P = '$_svgsDir/profile-2user.svg';
+  static const String navSettingsActive = '$_svgsDir/setting.svg';
+  static const String navSettingsInactive = '$_svgsDir/setting1.svg';
+
   static const String lottieSuccess = 'assets/lottie/success.json';
 }

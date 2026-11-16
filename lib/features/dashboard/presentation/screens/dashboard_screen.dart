@@ -9,6 +9,7 @@ import '../../../../app/theme/theme_controller.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/responsive_utils.dart';
+import '../../../../core/widgets/app_bottom_nav_bar.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/flag_icon.dart';
@@ -1144,11 +1145,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final bgColor = isDark
         ? AppColors.darkBackground
         : AppColors.lightBackground;
-    final navBg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
-    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-    final subColor = isDark
-        ? AppColors.darkTextSecondary
-        : AppColors.lightTextSecondary;
 
     final body = switch (_currentTab) {
       0 => _buildHomeBody(),
@@ -1159,52 +1155,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(child: ResponsiveContainer(maxWidth: 680, child: body)),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: navBg,
-          border: Border(top: BorderSide(color: borderColor, width: 0.6)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            height: 64,
-            child: Row(
-              children: [
-                Expanded(
-                  child: _BottomNavItem(
-                    icon: _currentTab == 0
-                        ? Icons.home_rounded
-                        : Icons.home_outlined,
-                    label: 'Home',
-                    isSelected: _currentTab == 0,
-                    unselectedColor: subColor,
-                    onTap: () => setState(() => _currentTab = 0),
-                  ),
-                ),
-                Expanded(
-                  child: _BottomNavItem(
-                    icon: Icons.groups_outlined,
-                    label: 'P2P',
-                    isSelected: _currentTab == 1,
-                    unselectedColor: subColor,
-                    onTap: () => setState(() => _currentTab = 1),
-                  ),
-                ),
-                Expanded(
-                  child: _BottomNavItem(
-                    icon: _currentTab == 2
-                        ? Icons.hexagon_rounded
-                        : Icons.hexagon_outlined,
-                    label: 'Settings',
-                    isSelected: _currentTab == 2,
-                    unselectedColor: subColor,
-                    onTap: () => setState(() => _currentTab = 2),
-                  ),
-                ),
-              ],
-            ),
+      bottomNavigationBar: AppBottomNavBar(
+        currentIndex: _currentTab,
+        onTap: (index) => setState(() => _currentTab = index),
+        items: const [
+          AppNavItem(
+            label: 'Home',
+            activeSvg: AppAssets.navHomeActive,
+            inactiveSvg: AppAssets.navHomeInactive,
           ),
-        ),
+          AppNavItem(
+            label: 'P2P',
+            activeSvg: AppAssets.navP2P,
+            inactiveSvg: AppAssets.navP2P,
+          ),
+          AppNavItem(
+            label: 'Settings',
+            activeSvg: AppAssets.navSettingsActive,
+            inactiveSvg: AppAssets.navSettingsInactive,
+          ),
+        ],
       ),
     );
   }
@@ -1333,46 +1303,6 @@ class _SheetOptionTile extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _BottomNavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final Color unselectedColor;
-  final VoidCallback onTap;
-
-  const _BottomNavItem({
-    required this.icon,
-    required this.label,
-    required this.isSelected,
-    required this.unselectedColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isSelected ? AppColors.primary : unselectedColor;
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 22, color: color),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Gordita',
-              fontSize: 11,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              color: color,
-            ),
-          ),
-        ],
       ),
     );
   }
