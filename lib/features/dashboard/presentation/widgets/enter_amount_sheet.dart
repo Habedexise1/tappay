@@ -9,10 +9,6 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_num_pad.dart';
 import '../dashboard_controller.dart';
 
-/// Bottom sheet for keying in a transfer amount.
-///
-/// Pops with the entered amount (in the selected display currency), or `null`
-/// when the user goes back / dismisses the sheet.
 class EnterAmountSheet extends StatefulWidget {
   final String recipientName;
   final String recipientDetail;

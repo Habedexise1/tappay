@@ -14,11 +14,8 @@ class AppBottomSheet extends StatelessWidget {
   final CrossAxisAlignment crossAxisAlignment;
   final MainAxisSize mainAxisSize;
 
-  /// When true the sheet fills the screen up to just below the status bar
-  /// and [child] expands to the remaining height.
   final bool expand;
 
-  /// Minimum space kept above an [expand]ed sheet.
   static const double minTopGap = 56;
 
   const AppBottomSheet({
@@ -47,8 +44,6 @@ class AppBottomSheet extends StatelessWidget {
         : AppColors.lightTextPrimary;
     final handleColor = isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0);
 
-    // Modal routes strip the top safe-area padding from MediaQuery, so read
-    // the status-bar inset from the window itself.
     final statusBar = MediaQueryData.fromView(View.of(context)).padding.top;
     final topGap = expand
         ? (statusBar + 12 > minTopGap ? statusBar + 12 : minTopGap)
@@ -60,60 +55,59 @@ class AppBottomSheet extends StatelessWidget {
         alignment: Alignment.bottomCenter,
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: maxWidth),
-          child: Container(
-            height: expand ? double.infinity : null,
-            decoration: BoxDecoration(
-              color: sheetBg,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-            ),
-            padding: padding ?? const EdgeInsets.fromLTRB(24, 12, 24, 28),
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: expand ? MainAxisSize.max : mainAxisSize,
-                crossAxisAlignment: crossAxisAlignment,
-                children: [
-                  if (showDragHandle) ...[
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: handleColor,
-                          borderRadius: BorderRadius.circular(2),
+          child: Material(
+            color: sheetBg,
+            clipBehavior: Clip.antiAlias,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            child: Container(
+              height: expand ? double.infinity : null,
+              padding: padding ?? const EdgeInsets.fromLTRB(24, 12, 24, 28),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: expand ? MainAxisSize.max : mainAxisSize,
+                  crossAxisAlignment: crossAxisAlignment,
+                  children: [
+                    if (showDragHandle) ...[
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: handleColor,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                  if (title != null ||
-                      titleWidget != null ||
-                      trailing != null) ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child:
-                              titleWidget ??
-                              Text(
-                                title ?? '',
-                                style: TextStyle(
-                                  fontFamily: 'Gordita',
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: titleColor,
+                      const SizedBox(height: 20),
+                    ],
+                    if (title != null ||
+                        titleWidget != null ||
+                        trailing != null) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child:
+                                titleWidget ??
+                                Text(
+                                  title ?? '',
+                                  style: TextStyle(
+                                    fontFamily: 'Gordita',
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: titleColor,
+                                  ),
                                 ),
-                              ),
-                        ),
-                        ?trailing,
-                      ],
-                    ),
-                    const SizedBox(height: 16),
+                          ),
+                          ?trailing,
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    if (expand) Expanded(child: child) else child,
                   ],
-                  if (expand) Expanded(child: child) else child,
-                ],
+                ),
               ),
             ),
           ),

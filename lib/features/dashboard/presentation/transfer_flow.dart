@@ -7,10 +7,6 @@ import 'dashboard_controller.dart';
 import 'widgets/confirm_pin_sheet.dart';
 import 'widgets/enter_amount_sheet.dart';
 
-/// Runs the send-money flow: amount sheet → PIN sheet → process → home.
-///
-/// Tapping back on the PIN sheet returns to the amount sheet with the
-/// previously entered amount preserved.
 Future<void> startTransferFlow(
   BuildContext context, {
   required String recipientName,

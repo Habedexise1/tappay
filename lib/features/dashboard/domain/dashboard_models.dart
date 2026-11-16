@@ -120,4 +120,3 @@ class PaymentCard {
     return 'Debit Card';
   }
 }
-

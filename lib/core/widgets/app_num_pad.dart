@@ -72,7 +72,6 @@ class AppNumPad extends StatelessWidget {
   final bool showBiometric;
   final AppNumPadStyle style;
 
-  /// Custom widget for the biometric key (e.g. a face-scan SVG).
   final Widget? biometricIcon;
 
   const AppNumPad({

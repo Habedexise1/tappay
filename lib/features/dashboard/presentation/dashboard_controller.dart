@@ -76,7 +76,38 @@ class DashboardController extends ChangeNotifier {
     _balance = stored == 24580.50 ? 6000000.00 : stored;
     _isBalanceMasked = prefs.isBalanceMasked();
 
-    _beneficiaries = [];
+    _beneficiaries = [
+      const Beneficiary(
+        id: 'b_1',
+        name: 'Sarah Jenkins',
+        handle: '@sarahj',
+        initials: 'SJ',
+      ),
+      const Beneficiary(
+        id: 'b_2',
+        name: 'David Miller',
+        handle: '@dmiller',
+        initials: 'DM',
+      ),
+      const Beneficiary(
+        id: 'b_3',
+        name: 'Elena Rostova',
+        handle: '@erostova',
+        initials: 'ER',
+      ),
+      const Beneficiary(
+        id: 'b_4',
+        name: 'Alexandre Chen',
+        handle: '@alexc',
+        initials: 'AC',
+      ),
+      const Beneficiary(
+        id: 'b_5',
+        name: 'Priya Sharma',
+        handle: '@priyash',
+        initials: 'PS',
+      ),
+    ];
 
     _notifications = [
       DashboardNotification(
