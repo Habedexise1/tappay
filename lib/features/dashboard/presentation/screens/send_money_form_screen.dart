@@ -30,7 +30,6 @@ class SendMoneyFormScreen extends StatefulWidget {
 class _SendMoneyFormScreenState extends State<SendMoneyFormScreen> {
   final TextEditingController _tagController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
-  final TextEditingController _noteController = TextEditingController();
 
   bool _saveToBeneficiaries = false;
   bool _isSending = false;
@@ -50,7 +49,6 @@ class _SendMoneyFormScreenState extends State<SendMoneyFormScreen> {
   void dispose() {
     _tagController.dispose();
     _amountController.dispose();
-    _noteController.dispose();
     super.dispose();
   }
 
@@ -117,9 +115,6 @@ class _SendMoneyFormScreenState extends State<SendMoneyFormScreen> {
       name: resolvedName == 'Account name' ? handle : resolvedName,
       handle: handle,
       amount: amountInNgn,
-      note: _noteController.text.trim().isEmpty
-          ? null
-          : _noteController.text.trim(),
     );
 
     if (_saveToBeneficiaries) {
@@ -131,7 +126,7 @@ class _SendMoneyFormScreenState extends State<SendMoneyFormScreen> {
 
     final tx = await qrController.executeTransfer(
       amount: amountInNgn,
-      note: _noteController.text.trim(),
+      note: '',
     );
 
     if (!mounted) return;
@@ -264,12 +259,6 @@ class _SendMoneyFormScreenState extends State<SendMoneyFormScreen> {
                         ),
                         errorText: _amountError,
                         onChanged: (_) => setState(() => _amountError = null),
-                      ),
-                      const SizedBox(height: 18),
-                      AppTextField(
-                        label: 'Description',
-                        hintText: 'Add a short note',
-                        controller: _noteController,
                       ),
                       const SizedBox(height: 18),
                       GestureDetector(

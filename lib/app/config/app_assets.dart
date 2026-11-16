@@ -8,6 +8,8 @@ abstract final class AppAssets {
   static const String onboardingSwap = '$_pngsDir/onboarding_swap.png';
   static const String creatingAccount = '$_pngsDir/creating_account.png';
   static const String shieldAlert = '$_pngsDir/shield_alert.png';
+  static const String nairaArt = '$_pngsDir/naira_art.png';
+  static const String shieldPin = '$_pngsDir/Sheild.png';
 
   static const String flagNigeria = '$_svgsDir/nigeria.svg';
   static const String flagUsa = '$_svgsDir/usa.svg';
@@ -23,4 +25,11 @@ abstract final class AppAssets {
   static const String iconOption = '$_svgsDir/option.svg';
   static const String iconPaperPlane = '$_svgsDir/PaperPlaneTilt.svg';
   static const String iconPlus = '$_svgsDir/Plus.svg';
+  static const String iconMoneyReceive = '$_svgsDir/money-recive.svg';
+  static const String iconCardAdd = '$_svgsDir/card-add.svg';
+  static const String iconThepeer = '$_svgsDir/thepeer.svg';
+  static const String iconCopy = '$_svgsDir/Copy.svg';
+  static const String iconWallet2 = '$_svgsDir/wallet-2.svg';
+  static const String iconArrowSwap = '$_svgsDir/arrow-swap.svg';
+  static const String iconReceiptText = '$_svgsDir/receipt-text.svg';
 }

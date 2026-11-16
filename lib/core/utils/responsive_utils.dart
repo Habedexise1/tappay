@@ -37,17 +37,20 @@ class ResponsiveContainer extends StatelessWidget {
   final Widget child;
   final double maxWidth;
   final EdgeInsetsGeometry padding;
+  final AlignmentGeometry alignment;
 
   const ResponsiveContainer({
     super.key,
     required this.child,
     this.maxWidth = ResponsiveUtils.maxContentWidth,
     this.padding = EdgeInsets.zero,
+    this.alignment = Alignment.topCenter,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return Align(
+      alignment: alignment,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: Padding(padding: padding, child: child),

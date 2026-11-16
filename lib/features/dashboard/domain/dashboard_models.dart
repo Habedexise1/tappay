@@ -83,3 +83,41 @@ enum WalletCurrency {
     this.flagAsset,
   });
 }
+
+class PaymentCard {
+  final String id;
+  final String holderName;
+  final String cardNumber;
+  final String expiryDate;
+  final String cvv;
+
+  const PaymentCard({
+    required this.id,
+    required this.holderName,
+    required this.cardNumber,
+    required this.expiryDate,
+    required this.cvv,
+  });
+
+  String get cleanNumber => cardNumber.replaceAll(RegExp(r'\s+'), '');
+
+  String get last4Digits {
+    final clean = cleanNumber;
+    if (clean.length < 4) return clean;
+    return clean.substring(clean.length - 4);
+  }
+
+  String get maskedNumber {
+    final last4 = last4Digits;
+    return '•••• •••• •••• $last4';
+  }
+
+  String get cardType {
+    final clean = cleanNumber;
+    if (clean.startsWith('4')) return 'Visa';
+    if (clean.startsWith('5')) return 'Mastercard';
+    if (clean.startsWith('506') || clean.startsWith('6500')) return 'Verve';
+    return 'Debit Card';
+  }
+}
+

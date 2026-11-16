@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,9 +9,11 @@ import 'package:tappay/core/storage/preferences_service.dart';
 import 'package:tappay/core/storage/secure_storage_service.dart';
 import 'package:tappay/features/auth/presentation/screens/create_pin_screen.dart';
 import 'package:tappay/features/auth/presentation/screens/setup_biometrics_screen.dart';
+import 'package:tappay/features/dashboard/presentation/widgets/confirm_pin_sheet.dart';
 import 'package:tappay/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:tappay/features/dashboard/presentation/widgets/enter_amount_sheet.dart';
 import 'package:tappay/features/dashboard/presentation/screens/send_money_beneficiaries_screen.dart';
-import 'package:tappay/features/dashboard/presentation/screens/send_money_form_screen.dart';
+import 'package:tappay/features/dashboard/presentation/screens/send_money_recipient_screen.dart';
 import 'package:tappay/features/kyc/presentation/screens/image_verification_capture_screen.dart';
 import 'package:tappay/features/kyc/presentation/screens/image_verification_intro_screen.dart';
 import 'package:tappay/features/kyc/presentation/screens/image_verification_thank_you_screen.dart';
@@ -96,6 +99,14 @@ Widget _wrapWithApp(PreferencesService prefs, Widget home) {
 }
 
 void main() {
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('home_widget'),
+          (MethodCall methodCall) async => true,
+        );
+  });
+
   testWidgets(
     'CreatePinScreen validates mismatch, confirms PIN, and reaches Dashboard',
     (WidgetTester tester) async {
@@ -172,6 +183,13 @@ void main() {
   testWidgets(
     'Dashboard Light & Dark render, currency sheet swaps, and Send Money succeeds',
     (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
       final darkPrefs = await _initMockPrefs(isDark: true);
       await tester.pumpWidget(_wrapWithApp(darkPrefs, const DashboardScreen()));
       await tester.pumpAndSettle();
@@ -202,17 +220,17 @@ void main() {
 
       expect(find.text('USD'), findsOneWidget);
 
-      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.tap(find.byKey(const ValueKey('more_quick_actions_btn')));
       await tester.pumpAndSettle();
 
       expect(find.text('Account details'), findsOneWidget);
       expect(find.text('Swap Currencies'), findsOneWidget);
       expect(find.text('Account Statement'), findsOneWidget);
 
-      await tester.tapAt(const Offset(20, 20));
+      Navigator.of(tester.element(find.text('Account Statement'))).pop();
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Send Money'));
+      await tester.tap(find.byKey(const ValueKey('send_money_chip_btn')));
       await tester.pumpAndSettle();
 
       expect(find.text('TapPay'), findsOneWidget);
@@ -227,27 +245,52 @@ void main() {
       await tester.tap(find.text('New account'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(SendMoneyFormScreen), findsOneWidget);
+      expect(find.byType(SendMoneyRecipientScreen), findsOneWidget);
 
       final textFields = find.byType(TextField);
       await tester.enterText(textFields.at(0), '@johndoe');
-      await tester.enterText(textFields.at(1), '100');
-      await tester.enterText(textFields.at(2), 'Lunch');
       await tester.pumpAndSettle();
 
       expect(find.text('Johndoe'), findsOneWidget);
 
-      await tester.tap(find.text('Save to beneficiaries'));
+      await tester.tap(find.text('Save as beneficiary'));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Send money'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 1600));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
-      expect(find.text('Transfer Successful'), findsOneWidget);
+      expect(find.byType(EnterAmountSheet), findsOneWidget);
+      Finder inSheet<T>(Finder f) =>
+          find.descendant(of: find.byType(T), matching: f);
+      expect(
+        inSheet<EnterAmountSheet>(find.text('Enter amount')),
+        findsOneWidget,
+      );
+      expect(inSheet<EnterAmountSheet>(find.text('Johndoe')), findsOneWidget);
+
+      for (final d in ['1', '0', '0', '0', '0']) {
+        await tester.tap(inSheet<EnterAmountSheet>(find.text(d)));
+        await tester.pumpAndSettle();
+      }
+
+      await tester.tap(inSheet<EnterAmountSheet>(find.text('Confirm')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(EnterAmountSheet), findsNothing);
+      expect(find.byType(ConfirmPinSheet), findsOneWidget);
+      expect(
+        inSheet<ConfirmPinSheet>(find.text('Confirm PIN')),
+        findsOneWidget,
+      );
+
+      for (final d in ['1', '2', '3', '4']) {
+        await tester.tap(inSheet<ConfirmPinSheet>(find.text(d)));
+        await tester.pumpAndSettle();
+      }
+
+      expect(find.byType(ConfirmPinSheet), findsNothing);
+      expect(find.byType(SendMoneyRecipientScreen), findsNothing);
+      expect(find.byType(DashboardScreen), findsOneWidget);
     },
   );
 }

@@ -63,11 +63,17 @@ class AppPinIndicator extends StatelessWidget {
   }
 }
 
+enum AppNumPadStyle { circle, rounded }
+
 class AppNumPad extends StatelessWidget {
   final ValueChanged<String> onDigitPressed;
   final VoidCallback onDeletePressed;
   final VoidCallback? onBiometricPressed;
   final bool showBiometric;
+  final AppNumPadStyle style;
+
+  /// Custom widget for the biometric key (e.g. a face-scan SVG).
+  final Widget? biometricIcon;
 
   const AppNumPad({
     super.key,
@@ -75,10 +81,32 @@ class AppNumPad extends StatelessWidget {
     required this.onDeletePressed,
     this.onBiometricPressed,
     this.showBiometric = false,
+    this.style = AppNumPadStyle.circle,
+    this.biometricIcon,
   });
 
   Widget _buildKey(BuildContext context, String value) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (style == AppNumPadStyle.rounded) {
+      return _RoundedKey(
+        semanticsLabel: value,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onDigitPressed(value);
+        },
+        child: Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'Gordita',
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: isDark
+                ? AppColors.darkTextPrimary
+                : AppColors.lightTextPrimary,
+          ),
+        ),
+      );
+    }
 
     return Material(
       color: Colors.transparent,
@@ -149,8 +177,64 @@ class AppNumPad extends StatelessWidget {
     );
   }
 
+  Widget _buildRounded(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor =
+        isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+
+    Widget row(List<Widget> keys) => Row(
+      children: [
+        for (var i = 0; i < keys.length; i++) ...[
+          if (i > 0) const SizedBox(width: 12),
+          Expanded(child: keys[i]),
+        ],
+      ],
+    );
+
+    final hasBiometric = showBiometric && onBiometricPressed != null;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        row(['1', '2', '3'].map((d) => _buildKey(context, d)).toList()),
+        const SizedBox(height: 12),
+        row(['4', '5', '6'].map((d) => _buildKey(context, d)).toList()),
+        const SizedBox(height: 12),
+        row(['7', '8', '9'].map((d) => _buildKey(context, d)).toList()),
+        const SizedBox(height: 12),
+        row([
+          if (hasBiometric)
+            _RoundedKey(
+              key: const ValueKey('numpad_biometric_key'),
+              semanticsLabel: 'Use biometrics',
+              highlighted: true,
+              onTap: () {
+                HapticFeedback.mediumImpact();
+                onBiometricPressed!();
+              },
+              child: biometricIcon ??
+                  Icon(Icons.fingerprint_rounded, size: 26, color: iconColor),
+            )
+          else
+            const SizedBox(height: 58),
+          _buildKey(context, '0'),
+          _RoundedKey(
+            key: const ValueKey('numpad_delete_key'),
+            semanticsLabel: 'Delete',
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              onDeletePressed();
+            },
+            child: Icon(Icons.backspace_outlined, size: 22, color: iconColor),
+          ),
+        ]),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (style == AppNumPadStyle.rounded) return _buildRounded(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -189,6 +273,45 @@ class AppNumPad extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+class _RoundedKey extends StatelessWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  final bool highlighted;
+  final String semanticsLabel;
+
+  const _RoundedKey({
+    super.key,
+    required this.child,
+    required this.onTap,
+    required this.semanticsLabel,
+    this.highlighted = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = highlighted
+        ? (isDark ? AppColors.darkSurface : const Color(0xFFF1F5F9))
+        : (isDark ? AppColors.darkSurfaceVariant : const Color(0xFFF1F1F1));
+
+    return Semantics(
+      button: true,
+      label: semanticsLabel,
+      excludeSemantics: true,
+      child: Material(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          splashColor: AppColors.primary.withValues(alpha: 0.15),
+          child: SizedBox(height: 58, child: Center(child: child)),
+        ),
+      ),
     );
   }
 }

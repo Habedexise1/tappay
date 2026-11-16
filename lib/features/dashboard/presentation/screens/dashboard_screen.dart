@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
@@ -8,9 +9,8 @@ import '../../../../app/theme/theme_controller.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/responsive_utils.dart';
-import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_card.dart';
-import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/flag_icon.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../auth/presentation/screens/change_pin_screen.dart';
@@ -19,13 +19,14 @@ import '../../../kyc/presentation/kyc_controller.dart';
 import '../../../kyc/presentation/screens/image_verification_intro_screen.dart';
 import '../../../qr_transfer/presentation/screens/qr_generator_screen.dart';
 import '../../../qr_transfer/presentation/screens/qr_scanner_screen.dart';
-import '../../../transactions/domain/transaction_model.dart';
 import '../../../transactions/presentation/screens/receipt_screen.dart';
 import '../../../transactions/presentation/screens/transactions_ledger_screen.dart';
 import '../../../transactions/presentation/transaction_controller.dart';
 import '../../domain/dashboard_models.dart';
 import '../dashboard_controller.dart';
+import 'cards/add_by_card_screen.dart';
 import 'send_money_beneficiaries_screen.dart';
+import 'send_to_bank_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -38,15 +39,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _currentTab = 0;
 
   void _showSelectCurrencySheet() {
-    showModalBottomSheet<void>(
+    showAppBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
+      title: 'Select Currency',
       builder: (sheetContext) {
         final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
-        final sheetBg = isDark
-            ? AppColors.darkBackground
-            : AppColors.lightBackground;
         final titleColor = isDark
             ? AppColors.darkTextPrimary
             : AppColors.lightTextPrimary;
@@ -57,514 +54,439 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ? AppColors.darkSurfaceVariant
             : const Color(0xFFD9F7EA);
         final itemBg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-
         final controller = sheetContext.watch<DashboardController>();
 
-        return Container(
-          decoration: BoxDecoration(
-            color: sheetBg,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: borderColor,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Select Currency',
-                  style: TextStyle(
-                    fontFamily: 'Gordita',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: titleColor,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ...WalletCurrency.values.map((currency) {
-                  final isSelected = controller.selectedCurrency == currency;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: InkWell(
-                      onTap: () {
-                        controller.selectCurrency(currency);
-                        Navigator.of(sheetContext).pop();
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected ? selectedBg : itemBg,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isSelected ? AppColors.primary : borderColor,
-                            width: isSelected ? 1.4 : 1.0,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            FlagIcon(
-                              assetPath: currency.flagAsset,
-                              fallbackEmoji: currency.flagEmoji,
-                              width: 26,
-                              height: 18,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                currency.label,
-                                style: TextStyle(
-                                  fontFamily: 'Gordita',
-                                  fontSize: 14,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w500,
-                                  color: titleColor,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showSendMoneyOptionsSheet() {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
-        final sheetBg = isDark
-            ? AppColors.darkBackground
-            : AppColors.lightBackground;
-        final titleColor = isDark
-            ? AppColors.darkTextPrimary
-            : AppColors.lightTextPrimary;
-        final subColor = isDark
-            ? AppColors.darkTextSecondary
-            : AppColors.lightTextSecondary;
-        final borderColor = isDark
-            ? AppColors.darkBorder
-            : AppColors.lightBorder;
-        final cardBg = isDark ? AppColors.darkSurface : const Color(0xFFF6F8F7);
-
-        return Container(
-          decoration: BoxDecoration(
-            color: sheetBg,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: borderColor,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Send Money',
-                  style: TextStyle(
-                    fontFamily: 'Gordita',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: titleColor,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _SheetOptionTile(
-                  icon: Icons.near_me_outlined,
-                  title: 'TapPay',
-                  subtitle: 'Send money to a TapPay user',
-                  cardBg: cardBg,
-                  borderColor: borderColor,
-                  titleColor: titleColor,
-                  subtitleColor: subColor,
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const BeneficiariesScreen(),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 12),
-                _SheetOptionTile(
-                  icon: Icons.near_me_outlined,
-                  title: isDark ? 'Other Banks' : 'Send to bank',
-                  subtitle: 'Send money to external account',
-                  cardBg: cardBg,
-                  borderColor: borderColor,
-                  titleColor: titleColor,
-                  subtitleColor: subColor,
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            const BeneficiariesScreen(isBankTransfer: true),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showMoreQuickActionsSheet() {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
-        final sheetBg = isDark
-            ? AppColors.darkBackground
-            : AppColors.lightBackground;
-        final titleColor = isDark
-            ? AppColors.darkTextPrimary
-            : AppColors.lightTextPrimary;
-        final subColor = isDark
-            ? AppColors.darkTextSecondary
-            : AppColors.lightTextSecondary;
-        final borderColor = isDark
-            ? AppColors.darkBorder
-            : AppColors.lightBorder;
-        final cardBg = isDark ? AppColors.darkSurface : const Color(0xFFF6F8F7);
-
-        return Container(
-          decoration: BoxDecoration(
-            color: sheetBg,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: borderColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 22),
-                _SheetOptionTile(
-                  icon: Icons.account_balance_wallet_rounded,
-                  title: 'Account details',
-                  subtitle: 'View your account informations',
-                  cardBg: cardBg,
-                  borderColor: borderColor,
-                  titleColor: titleColor,
-                  subtitleColor: subColor,
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    _showAccountDetailsSheet();
-                  },
-                ),
-                const SizedBox(height: 12),
-                _SheetOptionTile(
-                  icon: Icons.swap_vert_rounded,
-                  title: 'Swap Currencies',
-                  subtitle: 'Convert to another currency',
-                  cardBg: cardBg,
-                  borderColor: borderColor,
-                  titleColor: titleColor,
-                  subtitleColor: subColor,
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    _showSelectCurrencySheet();
-                  },
-                ),
-                const SizedBox(height: 12),
-                _SheetOptionTile(
-                  icon: Icons.receipt_long_rounded,
-                  title: 'Account Statement',
-                  subtitle: 'Generate a statement of your transactions',
-                  cardBg: cardBg,
-                  borderColor: borderColor,
-                  titleColor: titleColor,
-                  subtitleColor: subColor,
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const TransactionsLedgerScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showAccountDetailsSheet() {
-    final auth = context.read<AuthController>();
-    final dashboard = context.read<DashboardController>();
-    final firstName = auth.signUpDraft.firstName.trim().isEmpty
-        ? 'Jimmy'
-        : auth.signUpDraft.firstName.trim();
-    final lastName = auth.signUpDraft.lastName.trim();
-    final fullName = lastName.isEmpty ? firstName : '$firstName $lastName';
-    final tag = auth.signUpDraft.tapTag.trim().isEmpty
-        ? '@jimmy'
-        : auth.signUpDraft.tapTag.trim();
-
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
-        final sheetBg = isDark
-            ? AppColors.darkBackground
-            : AppColors.lightBackground;
-        final titleColor = isDark
-            ? AppColors.darkTextPrimary
-            : AppColors.lightTextPrimary;
-        final subColor = isDark
-            ? AppColors.darkTextSecondary
-            : AppColors.lightTextSecondary;
-        final borderColor = isDark
-            ? AppColors.darkBorder
-            : AppColors.lightBorder;
-
-        return Container(
-          decoration: BoxDecoration(
-            color: sheetBg,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: borderColor,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Account details',
-                  style: TextStyle(
-                    fontFamily: 'Gordita',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: titleColor,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _DetailRow(
-                  label: 'Account Name',
-                  value: fullName,
-                  labelColor: subColor,
-                  valueColor: titleColor,
-                ),
-                const SizedBox(height: 12),
-                _DetailRow(
-                  label: 'TapTag',
-                  value: tag,
-                  labelColor: subColor,
-                  valueColor: AppColors.primary,
-                ),
-                const SizedBox(height: 12),
-                _DetailRow(
-                  label: 'Account Number',
-                  value: '9048271653',
-                  labelColor: subColor,
-                  valueColor: titleColor,
-                ),
-                const SizedBox(height: 12),
-                _DetailRow(
-                  label: 'Active Currency',
-                  value: dashboard.selectedCurrency.label,
-                  labelColor: subColor,
-                  valueColor: titleColor,
-                ),
-                const SizedBox(height: 22),
-                AppButton(
-                  text: 'Done',
-                  onPressed: () => Navigator.of(sheetContext).pop(),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showFundWalletSheet() {
-    final amountController = TextEditingController();
-    String? errorText;
-
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            final isDark = Theme.of(context).brightness == Brightness.dark;
-            final sheetBg = isDark
-                ? AppColors.darkBackground
-                : AppColors.lightBackground;
-            final titleColor = isDark
-                ? AppColors.darkTextPrimary
-                : AppColors.lightTextPrimary;
-            final borderColor = isDark
-                ? AppColors.darkBorder
-                : AppColors.lightBorder;
-            final dashboard = context.read<DashboardController>();
-            final currency = dashboard.selectedCurrency;
-
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: WalletCurrency.values.map((currency) {
+            final isSelected = controller.selectedCurrency == currency;
             return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.viewInsetsOf(context).bottom,
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: sheetBg,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(24),
+              padding: const EdgeInsets.only(bottom: 12),
+              child: InkWell(
+                onTap: () {
+                  controller.selectCurrency(currency);
+                  Navigator.of(sheetContext).pop();
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
                   ),
-                ),
-                padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
-                child: SafeArea(
-                  top: false,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  decoration: BoxDecoration(
+                    color: isSelected ? selectedBg : itemBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : borderColor,
+                      width: isSelected ? 1.4 : 1.0,
+                    ),
+                  ),
+                  child: Row(
                     children: [
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: borderColor,
-                            borderRadius: BorderRadius.circular(2),
+                      FlagIcon(
+                        assetPath: currency.flagAsset,
+                        fallbackEmoji: currency.flagEmoji,
+                        width: 26,
+                        height: 18,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          currency.label,
+                          style: TextStyle(
+                            fontFamily: 'Gordita',
+                            fontSize: 14,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            color: titleColor,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        isDark ? 'Fund Wallet' : 'Add Money',
-                        style: TextStyle(
-                          fontFamily: 'Gordita',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: titleColor,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      AppTextField(
-                        label: 'Amount (${currency.code})',
-                        hintText: '0.00',
-                        controller: amountController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        errorText: errorText,
-                        onChanged: (_) => setModalState(() => errorText = null),
-                      ),
-                      const SizedBox(height: 20),
-                      AppButton(
-                        text: isDark ? 'Fund Wallet' : 'Add Money',
-                        onPressed: () async {
-                          final amount = double.tryParse(
-                            amountController.text.trim().replaceAll(',', ''),
-                          );
-                          if (amount == null || amount <= 0) {
-                            setModalState(
-                              () => errorText = 'Enter a valid amount',
-                            );
-                            return;
-                          }
-                          final amountNgn = amount / currency.rateFromNgn;
-                          final txController = context
-                              .read<TransactionController>();
-                          await dashboard.creditBalance(
-                            amountNgn,
-                            sender: 'Wallet Top Up',
-                          );
-                          txController.addTransaction(
-                            TransactionModel(
-                              id: 'tx_${DateTime.now().millisecondsSinceEpoch}',
-                              title: 'Wallet Top Up',
-                              category: 'Income',
-                              amount: amountNgn,
-                              date: DateTime.now(),
-                              status: TransactionStatus.completed,
-                              type: TransactionType.inflow,
-                              referenceNumber:
-                                  'TP${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}',
-                              recipientName: 'TapPay Wallet',
-                              note: 'Added via ${currency.code}',
-                            ),
-                          );
-                          if (context.mounted) {
-                            Navigator.of(context).pop();
-                          }
-                        },
                       ),
                     ],
                   ),
                 ),
               ),
             );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  void _showSendMoneyOptionsSheet() {
+    showAppBottomSheet<void>(
+      context: context,
+      title: 'Send Money',
+      builder: (sheetContext) {
+        final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
+        final titleColor = isDark
+            ? AppColors.darkTextPrimary
+            : AppColors.lightTextPrimary;
+        final subColor = isDark
+            ? AppColors.darkTextSecondary
+            : AppColors.lightTextSecondary;
+        final borderColor = isDark
+            ? AppColors.darkBorder
+            : AppColors.lightBorder;
+        final cardBg = isDark ? AppColors.darkSurface : const Color(0xFFF6F8F7);
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SheetOptionTile(
+              svgAsset: AppAssets.iconPaperPlane,
+              title: 'TapPay',
+              subtitle: 'Send money to a TapPay user',
+              cardBg: cardBg,
+              borderColor: borderColor,
+              titleColor: titleColor,
+              subtitleColor: subColor,
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const BeneficiariesScreen(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            _SheetOptionTile(
+              svgAsset: AppAssets.iconPaperPlane,
+              title: isDark ? 'Other Banks' : 'Send to bank',
+              subtitle: 'Send money to external account',
+              cardBg: cardBg,
+              borderColor: borderColor,
+              titleColor: titleColor,
+              subtitleColor: subColor,
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const SendToBankScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showMoreQuickActionsSheet() {
+    showAppBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) {
+        final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
+        final titleColor = isDark
+            ? AppColors.darkTextPrimary
+            : AppColors.lightTextPrimary;
+        final subColor = isDark
+            ? AppColors.darkTextSecondary
+            : AppColors.lightTextSecondary;
+        final borderColor = isDark
+            ? AppColors.darkBorder
+            : AppColors.lightBorder;
+        final cardBg = isDark ? AppColors.darkSurface : const Color(0xFFF6F8F7);
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _SheetOptionTile(
+              svgAsset: AppAssets.iconWallet2,
+              title: 'Account details',
+              subtitle: 'View your account informations',
+              cardBg: cardBg,
+              borderColor: borderColor,
+              titleColor: titleColor,
+              subtitleColor: subColor,
+              onTap: () {},
+            ),
+            const SizedBox(height: 12),
+            _SheetOptionTile(
+              svgAsset: AppAssets.iconArrowSwap,
+              title: 'Swap Currencies',
+              subtitle: 'Convert to another currency',
+              cardBg: cardBg,
+              borderColor: borderColor,
+              titleColor: titleColor,
+              subtitleColor: subColor,
+              onTap: () {},
+            ),
+            const SizedBox(height: 12),
+            _SheetOptionTile(
+              svgAsset: AppAssets.iconReceiptText,
+              title: 'Account Statement',
+              subtitle: 'Generate a statement of your transactions',
+              cardBg: cardBg,
+              borderColor: borderColor,
+              titleColor: titleColor,
+              subtitleColor: subColor,
+              onTap: () {},
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showBankTransferSheet() {
+    final auth = context.read<AuthController>();
+    final firstName = auth.signUpDraft.firstName.trim().isEmpty
+        ? 'Jimmy'
+        : auth.signUpDraft.firstName.trim();
+    final lastName = auth.signUpDraft.lastName.trim();
+    final fullName = lastName.isEmpty ? firstName : '$firstName $lastName';
+    const accountNumber = '1234567890';
+    const bankName = 'Providus';
+    bool copied = false;
+
+    showAppBottomSheet<void>(
+      context: context,
+      padding: const EdgeInsets.fromLTRB(24, 14, 24, 32),
+      builder: (sheetContext) {
+        final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
+        final titleColor = isDark ? AppColors.darkTextPrimary : Colors.black;
+        final subColor = isDark
+            ? AppColors.darkTextSecondary
+            : AppColors.glassBlue;
+        final cardBg = isDark
+            ? const Color(0xFF162821)
+            : const Color(0xFFF1F5F9);
+        final borderColor = const Color(0xFF94A3B8);
+
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Bank Transfer',
+                  style: TextStyle(
+                    fontFamily: 'Gordita',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: titleColor,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Use the details below to receive money into your TapPaywallet',
+                  style: TextStyle(
+                    fontFamily: 'Gordita',
+                    fontSize: 14,
+                    height: 1.4,
+                    color: subColor,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: borderColor, width: 1.0),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Bank',
+                        style: TextStyle(
+                          fontFamily: 'Gordita',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: titleColor,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        bankName,
+                        style: TextStyle(
+                          fontFamily: 'Gordita',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: subColor,
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Account Number',
+                                  style: TextStyle(
+                                    fontFamily: 'Gordita',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: titleColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  accountNumber,
+                                  style: TextStyle(
+                                    fontFamily: 'Gordita',
+                                    fontSize: 12,
+
+                                    color: subColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          InkWell(
+                            key: const ValueKey('copy_account_number_btn'),
+                            onTap: () {
+                              Clipboard.setData(
+                                const ClipboardData(text: accountNumber),
+                              );
+                              HapticFeedback.lightImpact();
+                              setSheetState(() => copied = true);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Account number copied to clipboard',
+                                    ),
+                                    duration: Duration(seconds: 2),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                              Future.delayed(const Duration(seconds: 2), () {
+                                if (sheetContext.mounted) {
+                                  try {
+                                    setSheetState(() => copied = false);
+                                  } catch (_) {}
+                                }
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(8),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: copied
+                                  ? const Icon(
+                                      Icons.check_rounded,
+                                      size: 22,
+                                      color: AppColors.primary,
+                                    )
+                                  : SvgPicture.asset(
+                                      AppAssets.iconCopy,
+                                      width: 22,
+                                      height: 22,
+                                      colorFilter: ColorFilter.mode(
+                                        titleColor,
+                                        BlendMode.srcIn,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 22),
+                      Text(
+                        'Account Name',
+                        style: TextStyle(
+                          fontFamily: 'Gordita',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: titleColor,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        fullName.isEmpty ? 'John Doe' : fullName,
+                        style: TextStyle(
+                          fontFamily: 'Gordita',
+                          fontSize: 12,
+
+                          color: subColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
           },
+        );
+      },
+    );
+  }
+
+  void _showAddMoneyOptionsSheet() {
+    showAppBottomSheet<void>(
+      context: context,
+      title: 'Add Money',
+      builder: (sheetContext) {
+        final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
+        final titleColor = isDark
+            ? AppColors.darkTextPrimary
+            : AppColors.lightTextPrimary;
+        final subColor = isDark
+            ? AppColors.darkTextSecondary
+            : AppColors.lightTextSecondary;
+        final cardBg = isDark ? AppColors.darkSurface : const Color(0xFFF8FAFC);
+        final borderColor = isDark
+            ? AppColors.darkBorder
+            : const Color(0xFFF1F5F9);
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _AddMoneyOptionTile(
+              leading: SvgPicture.asset(
+                AppAssets.iconMoneyReceive,
+                width: 28,
+                height: 28,
+                colorFilter: ColorFilter.mode(titleColor, BlendMode.srcIn),
+              ),
+              title: 'Bank Transfer',
+              subtitle: 'Receive money with you account number',
+              cardBg: cardBg,
+              borderColor: borderColor,
+              titleColor: titleColor,
+              subtitleColor: subColor,
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                _showBankTransferSheet();
+              },
+            ),
+            const SizedBox(height: 12),
+            _AddMoneyOptionTile(
+              leading: SvgPicture.asset(
+                AppAssets.iconCardAdd,
+                width: 28,
+                height: 28,
+                colorFilter: ColorFilter.mode(titleColor, BlendMode.srcIn),
+              ),
+              title: 'Card',
+              subtitle: 'Fund wallet using a debit card',
+              cardBg: cardBg,
+              borderColor: borderColor,
+              titleColor: titleColor,
+              subtitleColor: subColor,
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AddByCardScreen()),
+                );
+              },
+            ),
+          ],
         );
       },
     );
@@ -600,7 +522,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final transactions = transactionsController.filteredTransactions;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -739,9 +662,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 svgAsset: AppAssets.iconPlus,
                 backgroundColor: chipBg,
                 foregroundColor: titleColor,
-                onTap: _showFundWalletSheet,
+                onTap: _showAddMoneyOptionsSheet,
               ),
               _DashboardActionChip(
+                key: const ValueKey('send_money_chip_btn'),
                 label: 'Send Money',
                 svgAsset: AppAssets.iconPaperPlane,
                 backgroundColor: chipBg,
@@ -749,6 +673,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 onTap: _showSendMoneyOptionsSheet,
               ),
               InkWell(
+                key: const ValueKey('more_quick_actions_btn'),
                 onTap: _showMoreQuickActionsSheet,
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
@@ -1497,6 +1422,7 @@ class _DashboardActionChip extends StatelessWidget {
   final VoidCallback onTap;
 
   const _DashboardActionChip({
+    super.key,
     required this.label,
     required this.svgAsset,
     required this.backgroundColor,
@@ -1542,7 +1468,7 @@ class _DashboardActionChip extends StatelessWidget {
 }
 
 class _SheetOptionTile extends StatelessWidget {
-  final IconData icon;
+  final String svgAsset;
   final String title;
   final String subtitle;
   final Color cardBg;
@@ -1552,7 +1478,7 @@ class _SheetOptionTile extends StatelessWidget {
   final VoidCallback onTap;
 
   const _SheetOptionTile({
-    required this.icon,
+    required this.svgAsset,
     required this.title,
     required this.subtitle,
     required this.cardBg,
@@ -1577,7 +1503,12 @@ class _SheetOptionTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 22, color: titleColor),
+            SvgPicture.asset(
+              svgAsset,
+              width: 22,
+              height: 22,
+              colorFilter: ColorFilter.mode(titleColor, BlendMode.srcIn),
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -1607,46 +1538,6 @@ class _SheetOptionTile extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color labelColor;
-  final Color valueColor;
-
-  const _DetailRow({
-    required this.label,
-    required this.value,
-    required this.labelColor,
-    required this.valueColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Gordita',
-            fontSize: 13,
-            color: labelColor,
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontFamily: 'Gordita',
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: valueColor,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -1686,6 +1577,76 @@ class _BottomNavItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AddMoneyOptionTile extends StatelessWidget {
+  final Widget leading;
+  final String title;
+  final String subtitle;
+  final Color cardBg;
+  final Color borderColor;
+  final Color titleColor;
+  final Color subtitleColor;
+  final VoidCallback onTap;
+
+  const _AddMoneyOptionTile({
+    required this.leading,
+    required this.title,
+    required this.subtitle,
+    required this.cardBg,
+    required this.borderColor,
+    required this.titleColor,
+    required this.subtitleColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderColor, width: 0.8),
+        ),
+        child: Row(
+          children: [
+            SizedBox(width: 32, height: 32, child: Center(child: leading)),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontFamily: 'Gordita',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: titleColor,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontFamily: 'Gordita',
+                      fontSize: 12,
+                      color: subtitleColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

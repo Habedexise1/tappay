@@ -31,4 +31,6 @@ class AppColors {
   static const Color cardBlack = Color(0xFF0D1311);
   static const Color cardWhite = Color(0xFFFFFFFF);
   static const Color cardYellow = Color(0xFFFFCE00);
+  static const Color glassBlue = Color(0xFF0F172A);
+  static const Color subColor = Color(0xFF94A3B8);
 }

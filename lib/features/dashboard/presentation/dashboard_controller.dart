@@ -43,6 +43,31 @@ class DashboardController extends ChangeNotifier {
   int get unreadNotificationCount =>
       _notifications.where((n) => !n.isRead).length;
 
+  final List<PaymentCard> _savedCards = [];
+  List<PaymentCard> get savedCards => List.unmodifiable(_savedCards);
+
+  PaymentCard? _selectedCard;
+  PaymentCard? get selectedCard => _selectedCard;
+
+  void addCard(PaymentCard card) {
+    _savedCards.add(card);
+    _selectedCard = card;
+    notifyListeners();
+  }
+
+  void selectCard(PaymentCard? card) {
+    _selectedCard = card;
+    notifyListeners();
+  }
+
+  void removeCard(String cardId) {
+    _savedCards.removeWhere((c) => c.id == cardId);
+    if (_selectedCard?.id == cardId) {
+      _selectedCard = _savedCards.isNotEmpty ? _savedCards.first : null;
+    }
+    notifyListeners();
+  }
+
   Future<void> _loadDashboardData() async {
     _balanceState = const Loading();
     notifyListeners();
@@ -51,38 +76,7 @@ class DashboardController extends ChangeNotifier {
     _balance = stored == 24580.50 ? 6000000.00 : stored;
     _isBalanceMasked = prefs.isBalanceMasked();
 
-    _beneficiaries = const [
-      Beneficiary(
-        id: 'b1',
-        name: 'Sarah Jenkins',
-        handle: '@sarahj',
-        initials: 'SJ',
-      ),
-      Beneficiary(
-        id: 'b2',
-        name: 'David Miller',
-        handle: '@dmiller',
-        initials: 'DM',
-      ),
-      Beneficiary(
-        id: 'b3',
-        name: 'Elena Rostova',
-        handle: '@erostova',
-        initials: 'ER',
-      ),
-      Beneficiary(
-        id: 'b4',
-        name: 'Alexandre Chen',
-        handle: '@alexc',
-        initials: 'AC',
-      ),
-      Beneficiary(
-        id: 'b5',
-        name: 'Priya Sharma',
-        handle: '@priyash',
-        initials: 'PS',
-      ),
-    ];
+    _beneficiaries = [];
 
     _notifications = [
       DashboardNotification(

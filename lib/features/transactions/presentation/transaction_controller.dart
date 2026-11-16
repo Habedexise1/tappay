@@ -49,7 +49,7 @@ class TransactionController extends ChangeNotifier {
 
     try {
       final list = await repository.getTransactions();
-      _allTransactions = list;
+      _allTransactions = List<TransactionModel>.from(list);
       if (list.isEmpty) {
         _transactionsState = const Empty('No transactions found yet');
       } else {
@@ -74,7 +74,7 @@ class TransactionController extends ChangeNotifier {
   }
 
   void addTransaction(TransactionModel tx) {
-    _allTransactions.insert(0, tx);
+    _allTransactions = [tx, ..._allTransactions];
     _transactionsState = Success(_allTransactions);
     notifyListeners();
   }
