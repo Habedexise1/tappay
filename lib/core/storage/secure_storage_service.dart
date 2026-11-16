@@ -18,6 +18,8 @@ class SecureStorageService {
   static const String _keyTwoFactorEnabled = 'tappay_two_factor_enabled';
   static const String _keyTwoFactorType = 'tappay_two_factor_type';
   static const String _keyAuthToken = 'tappay_auth_token';
+  static const String _keyPassword = 'tappay_account_password';
+  static const String _keyTwoFactorSecret = 'tappay_two_factor_secret';
 
   Future<void> savePin(String pin) async {
     await _storage.write(key: _keyPin, value: pin);
@@ -65,6 +67,26 @@ class SecureStorageService {
 
   Future<String?> getToken() async {
     return await _storage.read(key: _keyAuthToken);
+  }
+
+  Future<void> deleteToken() async {
+    await _storage.delete(key: _keyAuthToken);
+  }
+
+  Future<void> savePassword(String password) async {
+    await _storage.write(key: _keyPassword, value: password);
+  }
+
+  Future<String?> getPassword() async {
+    return await _storage.read(key: _keyPassword);
+  }
+
+  Future<void> saveTwoFactorSecret(String secret) async {
+    await _storage.write(key: _keyTwoFactorSecret, value: secret);
+  }
+
+  Future<String?> getTwoFactorSecret() async {
+    return await _storage.read(key: _keyTwoFactorSecret);
   }
 
   Future<void> clearAll() async {

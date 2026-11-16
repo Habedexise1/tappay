@@ -10,6 +10,8 @@ abstract final class AppAssets {
   static const String shieldAlert = '$_pngsDir/shield_alert.png';
   static const String nairaArt = '$_pngsDir/naira_art.png';
   static const String shieldPin = '$_pngsDir/Sheild.png';
+  static const String profileAvatar = '$_pngsDir/profile_avatar.png';
+  static const String referralInvite = '$_pngsDir/referral_invite.png';
 
   static const String flagNigeria = '$_svgsDir/nigeria.svg';
   static const String flagUsa = '$_svgsDir/usa.svg';
@@ -32,4 +34,20 @@ abstract final class AppAssets {
   static const String iconWallet2 = '$_svgsDir/wallet-2.svg';
   static const String iconArrowSwap = '$_svgsDir/arrow-swap.svg';
   static const String iconReceiptText = '$_svgsDir/receipt-text.svg';
+  static const String iconNotificationStatus =
+      '$_svgsDir/notification-status.svg';
+  static const String iconNotification = '$_svgsDir/notification.svg';
+  static const String iconExport = '$_svgsDir/export.svg';
+  static const String iconMessage = '$_svgsDir/message.svg';
+  static const String iconKey = '$_svgsDir/key.svg';
+  static const String iconPasswordCheck = '$_svgsDir/password-check.svg';
+  static const String iconPeople = '$_svgsDir/people.svg';
+  static const String iconPersonalCard = '$_svgsDir/personalcard.svg';
+  static const String iconSecuritySafe = '$_svgsDir/security-safe.svg';
+  static const String iconSupport = '$_svgsDir/support.svg';
+  static const String iconShare = '$_svgsDir/share.svg';
+  static const String iconVerify = '$_svgsDir/verify.svg';
+  static const String iconMoon = '$_svgsDir/Moon.svg';
+
+  static const String lottieSuccess = 'assets/lottie/success.json';
 }

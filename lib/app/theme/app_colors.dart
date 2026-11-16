@@ -33,4 +33,20 @@ class AppColors {
   static const Color cardYellow = Color(0xFFFFCE00);
   static const Color glassBlue = Color(0xFF0F172A);
   static const Color subColor = Color(0xFF94A3B8);
+
+  static const Color lightCanvas = Color(0xFFF9F9F9);
+  static const Color darkCanvas = Color(0xFF0B1D16);
+  static const Color darkCard = Color(0xFF162821);
+  static const Color slate700 = Color(0xFF334155);
+  static const Color slate500 = Color(0xFF64748B);
+  static const Color slate400 = Color(0xFF94A3B8);
+  static const Color slate300 = Color(0xFFCBD5E1);
+  static const Color slate200 = Color(0xFFE2E8F0);
+  static const Color slate100 = Color(0xFFF1F5F9);
+  static const Color darkDivider = Color(0xFF1E293B);
+  static const Color successTint = Color(0xFFCCF8E8);
+  static const Color successText = Color(0xFF00B06E);
+  static const Color dangerRed = Color(0xFFEF4444);
+  static const Color toggleOff = Color(0xFF010F08);
+  static const Color keypadLight = Color(0xFFF0F0F0);
 }

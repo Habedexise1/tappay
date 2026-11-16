@@ -12,22 +12,27 @@ import '../../../../core/widgets/app_num_pad.dart';
 
 enum ConfirmPinResult { verified, back }
 
-/// Bottom sheet that authorizes a transaction with the 4-digit PIN or
-/// biometrics.
-///
-/// Pops with [ConfirmPinResult.verified] on success, [ConfirmPinResult.back]
-/// when the back arrow is tapped, or `null` when dismissed.
 class ConfirmPinSheet extends StatefulWidget {
-  const ConfirmPinSheet({super.key});
+  final String subtitle;
 
-  static Future<ConfirmPinResult?> show(BuildContext context) {
+  const ConfirmPinSheet({
+    super.key,
+    this.subtitle = 'Enter your PIN to authorize this\ntransaction',
+  });
+
+  static Future<ConfirmPinResult?> show(
+    BuildContext context, {
+    bool useRootNavigator = false,
+    String subtitle = 'Enter your PIN to authorize this\ntransaction',
+  }) {
     return showAppBottomSheet<ConfirmPinResult>(
       context: context,
       showDragHandle: false,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
       maxWidth: 520,
       expand: true,
-      builder: (_) => const ConfirmPinSheet(),
+      useRootNavigator: useRootNavigator,
+      builder: (_) => ConfirmPinSheet(subtitle: subtitle),
     );
   }
 
@@ -153,7 +158,7 @@ class _ConfirmPinSheetState extends State<ConfirmPinSheet> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Enter your PIN to authorize this\ntransaction',
+                  widget.subtitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'Gordita',

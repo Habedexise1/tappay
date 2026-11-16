@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import '../../../core/security/biometrics_service.dart';
 import '../../../core/storage/secure_storage_service.dart';
@@ -25,6 +27,13 @@ class AuthController extends ChangeNotifier {
   ViewState<bool> _authFlowState = const Initial();
   ViewState<bool> get authFlowState => _authFlowState;
 
+  ViewState<bool> _passwordState = const Initial();
+  ViewState<bool> get passwordState => _passwordState;
+
+  String? _pendingTwoFactorSecret;
+
+  String? get pendingTwoFactorSecret => _pendingTwoFactorSecret;
+
   SignUpDraft _signUpDraft = const SignUpDraft();
   SignUpDraft get signUpDraft => _signUpDraft;
 
@@ -41,6 +50,10 @@ class AuthController extends ChangeNotifier {
   );
   SecuritySettings get settings => _settings;
 
+  static const String _devPinOverride = String.fromEnvironment(
+    'TAPPAY_DEV_PIN',
+  );
+
   Future<void> _loadInitialSecurityState() async {
     _securityState = const Loading();
     notifyListeners();
@@ -48,7 +61,10 @@ class AuthController extends ChangeNotifier {
     try {
       final hasPin = await storage.hasPin();
 
-      if (!hasPin) {
+      if (kDebugMode && _devPinOverride.length == 4) {
+        await storage.savePin(_devPinOverride);
+        debugPrint('TapPay: debug PIN override applied ($_devPinOverride)');
+      } else if (!hasPin) {
         await storage.savePin('1234');
       }
 
@@ -124,6 +140,7 @@ class AuthController extends ChangeNotifier {
     _authFlowState = const Loading('Creating account...');
     notifyListeners();
 
+    await storage.savePassword(password);
     await storage.saveToken(
       'tappay_token_${DateTime.now().millisecondsSinceEpoch}',
     );
@@ -237,6 +254,131 @@ class AuthController extends ChangeNotifier {
   Future<void> toggleBiometrics(bool enable) async {
     await storage.setBiometricsEnabled(enable);
     _settings = _settings.copyWith(isBiometricsEnabled: enable);
+    notifyListeners();
+  }
+
+  Future<bool> setBiometricsEnabledSecurely(bool enable) async {
+    final available = await biometrics.canAuthenticate();
+    if (enable && !available) return false;
+    if (available) {
+      final ok = await biometrics.authenticate(
+        reason: enable
+            ? 'Confirm to enable biometric unlock'
+            : 'Confirm to disable biometric unlock',
+      );
+      if (!ok) return false;
+    }
+    await toggleBiometrics(enable);
+    return true;
+  }
+
+  static String? validateNewPassword(String password) {
+    if (password.length < 8) return 'Password must be at least 8 characters';
+    if (!RegExp(r'[A-Za-z]').hasMatch(password) ||
+        !RegExp(r'[0-9]').hasMatch(password)) {
+      return 'Use a mix of letters and numbers';
+    }
+    return null;
+  }
+
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    if (_passwordState is Loading) return false;
+
+    if (currentPassword.isEmpty) {
+      _passwordState = const Failure('Enter your current password');
+      notifyListeners();
+      return false;
+    }
+    final error = validateNewPassword(newPassword);
+    if (error != null) {
+      _passwordState = Failure(error);
+      notifyListeners();
+      return false;
+    }
+    if (newPassword == currentPassword) {
+      _passwordState = const Failure(
+        'New password must differ from your current password',
+      );
+      notifyListeners();
+      return false;
+    }
+
+    _passwordState = const Loading('Updating password...');
+    notifyListeners();
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    final saved = await storage.getPassword();
+    if (saved != null && saved.isNotEmpty && saved != currentPassword) {
+      _passwordState = const Failure('Current password is incorrect');
+      notifyListeners();
+      return false;
+    }
+
+    await storage.savePassword(newPassword);
+    _passwordState = const Success(true);
+    notifyListeners();
+    return true;
+  }
+
+  void resetPasswordState() {
+    if (_passwordState is Initial) return;
+    _passwordState = const Initial();
+    notifyListeners();
+  }
+
+  String prepareTwoFactorSecret() {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    final random = Random.secure();
+    return _pendingTwoFactorSecret ??= List.generate(
+      16,
+      (_) => alphabet[random.nextInt(alphabet.length)],
+    ).join();
+  }
+
+  Future<bool> activateTwoFactor({
+    required TwoFactorMethod method,
+    required String otp,
+  }) async {
+    final ok = await verifyOtp(otp);
+    if (!ok) return false;
+    if (method == TwoFactorMethod.authenticator) {
+      await storage.saveTwoFactorSecret(prepareTwoFactorSecret());
+    }
+    await updateTwoFactor(enabled: true, method: method);
+    _pendingTwoFactorSecret = null;
+    _countdownTimer?.cancel();
+    return true;
+  }
+
+  Future<bool> deactivateTwoFactor(String otp) async {
+    final ok = await verifyOtp(otp);
+    if (!ok) return false;
+    await updateTwoFactor(enabled: false, method: _settings.twoFactorMethod);
+    _countdownTimer?.cancel();
+    return true;
+  }
+
+  void resetOtpState() {
+    if (_otpState is Initial) return;
+    _otpState = const Initial();
+    notifyListeners();
+  }
+
+  Future<void> signOut({bool wipeDevice = false}) async {
+    _countdownTimer?.cancel();
+    if (wipeDevice) {
+      await storage.clearAll();
+    } else {
+      await storage.deleteToken();
+    }
+    _authFlowState = const Initial();
+    _pinActionState = const Initial();
+    _otpState = const Initial();
+    _passwordState = const Initial();
+    _pendingTwoFactorSecret = null;
     notifyListeners();
   }
 

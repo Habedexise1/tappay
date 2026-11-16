@@ -2,13 +2,13 @@ import '../../../../app/config/app_assets.dart';
 
 enum TwoFactorMethod {
   sms(
-    'SMS Authentication',
-    'Receive security codes via your mobile number',
+    'SMS',
+    'Receive verification codes via text message to authorize login access',
     'SMS',
   ),
   authenticator(
-    'Authenticator App',
-    'Use Google Authenticator or Authy for TOTP',
+    'Secret Key',
+    'Access your account anytime with a system generated secret key code.',
     'TOTP',
   ),
   email(

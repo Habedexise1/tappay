@@ -13,12 +13,11 @@ import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/flag_icon.dart';
 import '../../../auth/presentation/auth_controller.dart';
-import '../../../auth/presentation/screens/change_pin_screen.dart';
-import '../../../auth/presentation/screens/two_factor_setup_screen.dart';
 import '../../../kyc/presentation/kyc_controller.dart';
 import '../../../kyc/presentation/screens/image_verification_intro_screen.dart';
 import '../../../qr_transfer/presentation/screens/qr_generator_screen.dart';
 import '../../../qr_transfer/presentation/screens/qr_scanner_screen.dart';
+import '../../../settings/presentation/settings_tab.dart';
 import '../../../transactions/presentation/screens/receipt_screen.dart';
 import '../../../transactions/presentation/screens/transactions_ledger_screen.dart';
 import '../../../transactions/presentation/transaction_controller.dart';
@@ -166,9 +165,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onTap: () {
                 Navigator.of(sheetContext).pop();
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const SendToBankScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const SendToBankScreen()),
                 );
               },
             ),
@@ -1140,207 +1137,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildSettingsBody() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final titleColor = isDark
-        ? AppColors.darkTextPrimary
-        : AppColors.lightTextPrimary;
-    final subColor = isDark
-        ? AppColors.darkTextSecondary
-        : AppColors.lightTextSecondary;
-
-    final themeController = context.watch<ThemeController>();
-    final auth = context.watch<AuthController>();
-    final kyc = context.watch<KycController>();
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Settings',
-            style: TextStyle(
-              fontFamily: 'Gordita',
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: titleColor,
-            ),
-          ),
-          const SizedBox(height: 20),
-          AppCard(
-            child: Row(
-              children: [
-                Icon(
-                  isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    'Dark Mode',
-                    style: TextStyle(
-                      fontFamily: 'Gordita',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: titleColor,
-                    ),
-                  ),
-                ),
-                Switch(
-                  value: themeController.isDarkMode,
-                  activeThumbColor: AppColors.primary,
-                  onChanged: (_) => themeController.toggleTheme(),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          AppCard(
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ChangePinScreen()),
-              );
-            },
-            child: Row(
-              children: [
-                const Icon(Icons.pin_outlined, color: AppColors.primary),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Transaction PIN',
-                        style: TextStyle(
-                          fontFamily: 'Gordita',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: titleColor,
-                        ),
-                      ),
-                      Text(
-                        'Update your 4-digit security PIN',
-                        style: TextStyle(
-                          fontFamily: 'Gordita',
-                          fontSize: 12,
-                          color: subColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 14,
-                  color: subColor,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          AppCard(
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const TwoFactorSetupScreen()),
-              );
-            },
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.verified_user_outlined,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Two-Factor Authentication',
-                        style: TextStyle(
-                          fontFamily: 'Gordita',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: titleColor,
-                        ),
-                      ),
-                      Text(
-                        auth.settings.isTwoFactorEnabled
-                            ? '${auth.settings.twoFactorMethod.badge} enabled'
-                            : 'Protect logins with 2FA',
-                        style: TextStyle(
-                          fontFamily: 'Gordita',
-                          fontSize: 12,
-                          color: subColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 14,
-                  color: subColor,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          AppCard(
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const ImageVerificationIntroScreen(),
-                ),
-              );
-            },
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.face_retouching_natural,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'KYC Verification',
-                        style: TextStyle(
-                          fontFamily: 'Gordita',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: titleColor,
-                        ),
-                      ),
-                      Text(
-                        kyc.profile.isVerified ? 'Verified' : 'Pending setup',
-                        style: TextStyle(
-                          fontFamily: 'Gordita',
-                          fontSize: 12,
-                          color: kyc.profile.isVerified
-                              ? AppColors.primary
-                              : subColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 14,
-                  color: subColor,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final themeController = context.watch<ThemeController>();
@@ -1357,7 +1153,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final body = switch (_currentTab) {
       0 => _buildHomeBody(),
       1 => _buildP2PBody(),
-      _ => _buildSettingsBody(),
+      _ => SettingsTab(onExit: () => setState(() => _currentTab = 0)),
     };
 
     return Scaffold(
@@ -1397,8 +1193,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Expanded(
                   child: _BottomNavItem(
                     icon: _currentTab == 2
-                        ? Icons.settings_rounded
-                        : Icons.settings_outlined,
+                        ? Icons.hexagon_rounded
+                        : Icons.hexagon_outlined,
                     label: 'Settings',
                     isSelected: _currentTab == 2,
                     unselectedColor: subColor,

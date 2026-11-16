@@ -48,4 +48,18 @@ class PreferencesService {
   Future<void> setPrimaryBalance(double balance) async {
     await _prefs.setDouble(_keyPrimaryBalance, balance);
   }
+
+  bool getFlag(String key, {bool defaultValue = false}) {
+    return _prefs.getBool('tappay_flag_$key') ?? defaultValue;
+  }
+
+  Future<void> setFlag(String key, bool value) async {
+    await _prefs.setBool('tappay_flag_$key', value);
+  }
+
+  String? getString(String key) => _prefs.getString('tappay_str_$key');
+
+  Future<void> setString(String key, String value) async {
+    await _prefs.setString('tappay_str_$key', value);
+  }
 }

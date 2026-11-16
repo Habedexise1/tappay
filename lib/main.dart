@@ -18,6 +18,8 @@ import 'features/kyc/presentation/kyc_controller.dart';
 import 'features/onboarding/presentation/splash_screen.dart';
 import 'features/qr_transfer/presentation/qr_transfer_controller.dart';
 import 'features/qr_transfer/presentation/screens/qr_scanner_screen.dart';
+import 'features/settings/data/mock_settings_repository.dart';
+import 'features/settings/presentation/settings_controller.dart';
 import 'features/transactions/data/transaction_repository.dart';
 import 'features/transactions/presentation/transaction_controller.dart';
 import 'features/widgets_bridge/home_widget_service.dart';
@@ -87,6 +89,20 @@ class TapPayRoot extends StatelessWidget {
               TransactionController(repository: transactionRepository),
         ),
         ChangeNotifierProvider<KycController>(create: (_) => KycController()),
+        ChangeNotifierProxyProvider<AuthController, SettingsController>(
+          create: (_) => SettingsController(
+            repository: MockSettingsRepository(prefs: preferencesService),
+          ),
+          update: (_, auth, settings) {
+            final draft = auth.signUpDraft;
+            return settings!..applySignUpDetails(
+              firstName: draft.firstName,
+              lastName: draft.lastName,
+              tapTag: draft.tapTag,
+              email: draft.isPhoneContact ? '' : draft.contactValue,
+            );
+          },
+        ),
         ChangeNotifierProxyProvider2<
           DashboardController,
           TransactionController,
