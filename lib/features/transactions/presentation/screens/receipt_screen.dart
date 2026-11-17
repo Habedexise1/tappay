@@ -1,10 +1,6 @@
-import 'dart:io';
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/theme_controller.dart';
@@ -12,6 +8,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/responsive_utils.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../data/receipt_exporter.dart';
 import '../../domain/transaction_model.dart';
 
 class ReceiptScreen extends StatefulWidget {
@@ -27,75 +24,45 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
   final GlobalKey _receiptBoundaryKey = GlobalKey();
   bool _isExporting = false;
 
-  Future<File?> _captureReceiptImage() async {
-    try {
-      final boundary =
-          _receiptBoundaryKey.currentContext?.findRenderObject()
-              as RenderRepaintBoundary?;
-      if (boundary == null) return null;
+  final ReceiptExporter _exporter = const ReceiptExporter();
 
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) return null;
+  RenderRepaintBoundary? get _boundary =>
+      _receiptBoundaryKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
 
-      final pngBytes = byteData.buffer.asUint8List();
-      final dir = await getApplicationDocumentsDirectory();
-      final file = File(
-        '${dir.path}/TapPay_Receipt_${widget.transaction.referenceNumber}.png',
-      );
-      await file.writeAsBytes(pngBytes);
-      return file;
-    } catch (e) {
-      return null;
-    }
-  }
+  Future<void> _export(
+    Future<ReceiptExportResult> Function(
+      RenderRepaintBoundary boundary,
+      TransactionModel tx,
+    )
+    action,
+  ) async {
+    final boundary = _boundary;
+    if (boundary == null || _isExporting) return;
 
-  Future<void> _shareReceipt() async {
     setState(() => _isExporting = true);
-    final file = await _captureReceiptImage();
+    final result = await action(boundary, widget.transaction);
+    if (!mounted) return;
     setState(() => _isExporting = false);
 
-    if (file != null) {
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text:
-            'TapPay Transaction Receipt (${widget.transaction.referenceNumber})',
-      );
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not generate receipt image'),
-          backgroundColor: AppColors.accentRed,
-        ),
-      );
-    }
+    final (message, color) = switch (result) {
+      ReceiptSaved(:final path) => (
+        'Receipt saved: ${path.split('/').last}',
+        AppColors.primaryGreen,
+      ),
+      ReceiptExportFailed(:final message) => (message, AppColors.accentRed),
+      ReceiptShared() || ReceiptCancelled() => (null, null),
+    };
+    if (message == null) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message), backgroundColor: color));
   }
 
-  Future<void> _saveReceiptLocally() async {
-    setState(() => _isExporting = true);
-    final file = await _captureReceiptImage();
-    setState(() => _isExporting = false);
+  Future<void> _shareReceipt() => _export(_exporter.share);
 
-    if (mounted) {
-      if (file != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Receipt saved to device: ${file.path.split('/').last}',
-            ),
-            backgroundColor: AppColors.primaryGreen,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to save receipt'),
-            backgroundColor: AppColors.accentRed,
-          ),
-        );
-      }
-    }
-  }
+  Future<void> _saveReceiptLocally() => _export(_exporter.saveToDevice);
 
   @override
   Widget build(BuildContext context) {

@@ -25,3 +25,17 @@ class StorageException extends AppException {
     String? code,
   ]) : super(code: code);
 }
+
+class NetworkException extends AppException {
+  const NetworkException([
+    super.message = 'The network request could not be completed.',
+    String? code,
+  ]) : super(code: code);
+}
+
+class InsufficientFundsException extends AppException {
+  const InsufficientFundsException([
+    super.message = 'Insufficient funds in account balance.',
+    String? code,
+  ]) : super(code: code);
+}

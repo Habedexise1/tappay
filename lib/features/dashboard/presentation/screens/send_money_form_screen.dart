@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/utils/view_state.dart';
+
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/responsive_utils.dart';
@@ -171,7 +173,10 @@ class _SendMoneyFormScreenState extends State<SendMoneyFormScreen> {
           builder: (_) => ResultStateScreen(
             isSuccess: false,
             title: 'Transfer Failed',
-            subtitle: 'We could not complete your transfer. Please try again.',
+            subtitle: switch (qrController.transferState) {
+              Failure(:final message) => message,
+              _ => 'We could not complete your transfer. Please try again.',
+            },
             primaryButtonText: 'Try Again',
             onPrimaryPressed: () => Navigator.of(context).pop(),
           ),

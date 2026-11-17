@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+
+import '../../../core/errors/error_mapper.dart';
 import '../../../core/security/biometrics_service.dart';
 import '../../../core/utils/view_state.dart';
 import '../../dashboard/presentation/dashboard_controller.dart';
@@ -12,13 +14,17 @@ class QrTransferController extends ChangeNotifier {
   final BiometricsService biometrics;
   final DashboardController dashboardController;
   final TransactionController transactionController;
+  final String Function() _nonce;
 
   QrTransferController({
     required this.repository,
     required this.biometrics,
     required this.dashboardController,
     required this.transactionController,
-  });
+    String Function()? nonceGenerator,
+  }) : _nonce =
+           nonceGenerator ??
+           (() => DateTime.now().microsecondsSinceEpoch.toRadixString(36));
 
   ViewState<TransactionModel> _transferState = const Initial();
   ViewState<TransactionModel> get transferState => _transferState;
@@ -29,7 +35,11 @@ class QrTransferController extends ChangeNotifier {
   bool _isTorchOn = false;
   bool get isTorchOn => _isTorchOn;
 
-  String? _inFlightIdempotencyKey;
+  ({String fingerprint, String key})? _pendingIntent;
+
+  String? get pendingIdempotencyKey => _pendingIntent?.key;
+
+  bool get isProcessing => _transferState is Loading<TransactionModel>;
 
   void toggleTorch() {
     _isTorchOn = !_isTorchOn;
@@ -63,56 +73,43 @@ class QrTransferController extends ChangeNotifier {
     required double amount,
     required String note,
   }) async {
-    final payload = _scannedPayload;
-    if (payload == null) {
-      _transferState = const Failure('No recipient selected');
-      notifyListeners();
-      return null;
-    }
+    if (isProcessing) return null;
+    if (!_validate(amount)) return null;
 
-    if (amount <= 0) {
-      _transferState = const Failure(
-        'Transfer amount must be greater than zero',
-      );
-      notifyListeners();
-      return null;
-    }
-
-    if (amount > dashboardController.balance) {
-      _transferState = const Failure('Insufficient funds in account balance');
-      notifyListeners();
-      return null;
-    }
-
+    final payload = _scannedPayload!;
     final authenticated = await biometrics.authenticate(
       reason:
           'Confirm transfer of \$${amount.toStringAsFixed(2)} to ${payload.recipient}',
     );
 
     if (!authenticated) {
-      _transferState = const Failure(
-        'Biometric verification cancelled or failed',
-      );
-      notifyListeners();
+      _emit(const Failure('Biometric verification cancelled or failed'));
       return null;
     }
 
-    final idempotencyKey =
-        'idemp_${payload.accountHandle}_${amount}_${DateTime.now().millisecondsSinceEpoch}';
-    if (_inFlightIdempotencyKey != null) {
-      return null;
-    }
-    _inFlightIdempotencyKey = idempotencyKey;
+    return submitTransfer(amount: amount, note: note);
+  }
 
-    _transferState = const Loading('Processing secure transfer...');
-    notifyListeners();
+  Future<TransactionModel?> submitTransfer({
+    required double amount,
+    required String note,
+    String category = 'Transfer',
+  }) async {
+    if (isProcessing) return null;
+    if (!_validate(amount)) return null;
+
+    final payload = _scannedPayload!;
+    final key = _idempotencyKeyFor(payload, amount, category);
+
+    _emit(const Loading('Processing secure transfer...'));
 
     try {
       final tx = await repository.executeTransfer(
         recipient: payload.recipient,
         amount: amount,
-        note: note.isNotEmpty ? note : (payload.note ?? 'Transfer'),
-        idempotencyKey: idempotencyKey,
+        note: note.isNotEmpty ? note : (payload.note ?? category),
+        idempotencyKey: key,
+        category: category,
       );
 
       await dashboardController.deductBalance(
@@ -121,14 +118,11 @@ class QrTransferController extends ChangeNotifier {
       );
       transactionController.addTransaction(tx);
 
-      _transferState = Success(tx);
-      _inFlightIdempotencyKey = null;
-      notifyListeners();
+      _pendingIntent = null;
+      _emit(Success(tx));
       return tx;
-    } catch (e) {
-      _transferState = Failure('Transfer failed: $e');
-      _inFlightIdempotencyKey = null;
-      notifyListeners();
+    } catch (error) {
+      _emit(Failure(ErrorMapper.toFailure(error).message));
       return null;
     }
   }
@@ -136,7 +130,44 @@ class QrTransferController extends ChangeNotifier {
   void resetTransfer() {
     _transferState = const Initial();
     _scannedPayload = null;
-    _inFlightIdempotencyKey = null;
+    _pendingIntent = null;
+    notifyListeners();
+  }
+
+  bool _validate(double amount) {
+    if (_scannedPayload == null) {
+      _emit(const Failure('No recipient selected'));
+      return false;
+    }
+    if (amount <= 0) {
+      _emit(const Failure('Transfer amount must be greater than zero'));
+      return false;
+    }
+    if (amount > dashboardController.balance) {
+      _emit(const Failure('Insufficient funds in account balance'));
+      return false;
+    }
+    return true;
+  }
+
+  String _idempotencyKeyFor(
+    QrTransferPayload payload,
+    double amount,
+    String category,
+  ) {
+    final fingerprint =
+        '${payload.accountHandle}|${amount.toStringAsFixed(2)}|$category';
+    final current = _pendingIntent;
+    if (current != null && current.fingerprint == fingerprint) {
+      return current.key;
+    }
+    final key = 'idemp_${_nonce()}';
+    _pendingIntent = (fingerprint: fingerprint, key: key);
+    return key;
+  }
+
+  void _emit(ViewState<TransactionModel> state) {
+    _transferState = state;
     notifyListeners();
   }
 }

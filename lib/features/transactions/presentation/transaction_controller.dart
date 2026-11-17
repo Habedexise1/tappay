@@ -1,7 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:share_plus/share_plus.dart';
-import '../../../core/utils/currency_formatter.dart';
-import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/view_state.dart';
 import '../data/transaction_repository.dart';
 import '../domain/transaction_model.dart';
@@ -77,25 +74,5 @@ class TransactionController extends ChangeNotifier {
     _allTransactions = [tx, ..._allTransactions];
     _transactionsState = Success(_allTransactions);
     notifyListeners();
-  }
-
-  Future<void> shareReceipt(TransactionModel tx) async {
-    final text =
-        '''
-================================
-         TapPay Receipt
-================================
-Reference: ${tx.referenceNumber}
-Recipient: ${tx.recipientName}
-Amount:    ${CurrencyFormatter.format(tx.amount)}
-Date:      ${DateFormatter.formatFull(tx.date)}
-Status:    ${tx.status.label}
-Category:  ${tx.category}
-Note:      ${tx.note ?? 'None'}
-================================
-Verified by TapPay Secure Engine
-''';
-
-    await Share.share(text, subject: 'TapPay Receipt - ${tx.referenceNumber}');
   }
 }
