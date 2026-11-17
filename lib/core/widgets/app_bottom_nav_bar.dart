@@ -16,8 +16,6 @@ class AppNavItem {
   });
 }
 
-/// Figma "Nav Bar": 70px bar on the canvas colour with a hairline top
-/// border; the active tab shows its filled icon and label in brand green.
 class AppBottomNavBar extends StatelessWidget {
   final List<AppNavItem> items;
   final int currentIndex;
@@ -118,6 +116,141 @@ class _NavButton extends StatelessWidget {
               child: Text(item.label),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class AppSideNavRail extends StatelessWidget {
+  final List<AppNavItem> items;
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  final bool extended;
+
+  const AppSideNavRail({
+    super.key,
+    required this.items,
+    required this.currentIndex,
+    required this.onTap,
+    this.extended = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final background = isDark ? AppColors.darkCanvas : AppColors.lightCanvas;
+    final divider = isDark ? AppColors.darkDivider : AppColors.slate200;
+    final inactive = isDark ? AppColors.darkTextSecondary : AppColors.slate500;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: background,
+        border: Border(right: BorderSide(color: divider)),
+      ),
+      child: SafeArea(
+        right: false,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          width: extended ? 200 : 92,
+          child: Column(
+            children: [
+              const SizedBox(height: 28),
+              for (var i = 0; i < items.length; i++)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  child: _RailButton(
+                    item: items[i],
+                    selected: i == currentIndex,
+                    extended: extended,
+                    inactiveColor: inactive,
+                    onTap: () {
+                      if (i != currentIndex) HapticFeedback.selectionClick();
+                      onTap(i);
+                    },
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RailButton extends StatelessWidget {
+  final AppNavItem item;
+  final bool selected;
+  final bool extended;
+  final Color inactiveColor;
+  final VoidCallback onTap;
+
+  const _RailButton({
+    required this.item,
+    required this.selected,
+    required this.extended,
+    required this.inactiveColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? AppColors.primaryGreen : inactiveColor;
+    final icon = AnimatedSwitcher(
+      duration: const Duration(milliseconds: 180),
+      child: SvgPicture.asset(
+        selected ? item.activeSvg : item.inactiveSvg,
+        key: ValueKey(selected),
+        width: 24,
+        height: 24,
+        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+      ),
+    );
+    final label = Text(
+      item.label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontFamily: 'Gordita',
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: color,
+      ),
+    );
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: item.label,
+      excludeSemantics: true,
+      child: Material(
+        color: selected
+            ? AppColors.primaryGreen.withValues(alpha: 0.12)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          key: ValueKey('nav_${item.label}'),
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: extended
+                ? Row(
+                    children: [
+                      icon,
+                      const SizedBox(width: 12),
+                      Expanded(child: label),
+                    ],
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [icon, const SizedBox(height: 6), label],
+                  ),
+          ),
         ),
       ),
     );

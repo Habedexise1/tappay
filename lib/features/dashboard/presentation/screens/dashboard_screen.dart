@@ -13,6 +13,7 @@ import '../../../../core/widgets/app_bottom_nav_bar.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/flag_icon.dart';
+import '../../../../core/widgets/skeleton_loader.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../kyc/presentation/kyc_controller.dart';
 import '../../../kyc/domain/kyc_models.dart';
@@ -522,290 +523,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final kycStatus = kyc.statusFor(kycFlow);
     final transactions = transactionsController.filteredTransactions;
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: chipBg,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkBorder
-                        : AppColors.lightBorder,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Icon(Icons.person_rounded, size: 20, color: titleColor),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Hi, $firstName',
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Gordita',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: titleColor,
-                  ),
+    final summary = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: chipBg,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                 ),
               ),
-              InkWell(
-                onTap: _showSelectCurrencySheet,
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: chipBg,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      FlagIcon(
-                        assetPath: currency.flagAsset,
-                        fallbackEmoji: currency.flagEmoji,
-                        width: 20,
-                        height: 14,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        currency.code,
-                        style: TextStyle(
-                          fontFamily: 'Gordita',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: titleColor,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: 16,
-                        color: titleColor,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 28),
-          Text(
-            'Account Balance',
-            style: TextStyle(
-              fontFamily: 'Gordita',
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: subColor,
+              alignment: Alignment.center,
+              child: Icon(Icons.person_rounded, size: 20, color: titleColor),
             ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Flexible(
-                child: Text(
-                  dashboard.isBalanceMasked
-                      ? '${currency.symbol}•••••••'
-                      : dashboard.formattedActiveBalance,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Gordita',
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: titleColor,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              InkWell(
-                onTap: () => dashboard.toggleBalanceMask(),
-                borderRadius: BorderRadius.circular(20),
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: dashboard.isBalanceMasked
-                      ? Icon(
-                          Icons.visibility_outlined,
-                          size: 20,
-                          color: titleColor,
-                        )
-                      : SvgPicture.asset(
-                          AppAssets.iconEyeSlash,
-                          width: 20,
-                          height: 20,
-                          colorFilter: ColorFilter.mode(
-                            titleColor,
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _DashboardActionChip(
-                label: isDark ? 'Fund Wallet' : 'Add Money',
-                svgAsset: AppAssets.iconPlus,
-                backgroundColor: chipBg,
-                foregroundColor: titleColor,
-                onTap: _showAddMoneyOptionsSheet,
-              ),
-              _DashboardActionChip(
-                key: const ValueKey('send_money_chip_btn'),
-                label: 'Send Money',
-                svgAsset: AppAssets.iconPaperPlane,
-                backgroundColor: chipBg,
-                foregroundColor: titleColor,
-                onTap: _showSendMoneyOptionsSheet,
-              ),
-              InkWell(
-                key: const ValueKey('more_quick_actions_btn'),
-                onTap: _showMoreQuickActionsSheet,
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 11,
-                  ),
-                  decoration: BoxDecoration(
-                    color: chipBg,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: SvgPicture.asset(
-                    AppAssets.iconOption,
-                    width: 18,
-                    height: 18,
-                    colorFilter: ColorFilter.mode(titleColor, BlendMode.srcIn),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (kycStatus != KycStatus.verified) ...[
-            const SizedBox(height: 24),
-            InkWell(
-              key: const ValueKey('dashboard_kyc_banner'),
-              onTap: kycStatus == KycStatus.inReview
-                  ? null
-                  : () => KycNavigator.start(context, kycFlow),
-              borderRadius: BorderRadius.circular(14),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: Stack(
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 16,
-                      ),
-                      color: kycBg,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  kycStatus == KycStatus.inReview
-                                      ? 'Verification in review'
-                                      : 'Complete your account setup',
-                                  style: TextStyle(
-                                    fontFamily: 'Gordita',
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: kycTitleColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  kycStatus == KycStatus.inReview
-                                      ? "We'll notify you once your ${kycFlow.label} KYC is approved"
-                                      : kycFlow == KycFlow.gbpEur
-                                      ? 'Complete GBP/EUR KYC to transact in ${currency.code}'
-                                      : 'Make all transactions by completing your KYC',
-                                  style: TextStyle(
-                                    fontFamily: 'Gordita',
-                                    fontSize: 11,
-                                    color: kycSubColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          SvgPicture.asset(
-                            AppAssets.iconArrowRight,
-                            width: 18,
-                            height: 18,
-                            colorFilter: ColorFilter.mode(
-                              kycTitleColor,
-                              BlendMode.srcIn,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Positioned(
-                      left: -10,
-                      bottom: -15,
-                      child: IgnorePointer(
-                        child: SvgPicture.asset(
-                          AppAssets.iconLineLeft,
-                          width: 80,
-                          height: 70,
-                          colorFilter: ColorFilter.mode(
-                            isDark
-                                ? Colors.black.withValues(alpha: 0.08)
-                                : Colors.white.withValues(alpha: 0.15),
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 40,
-                      top: -10,
-                      child: IgnorePointer(
-                        child: SvgPicture.asset(
-                          AppAssets.iconLineRight,
-                          width: 80,
-                          height: 50,
-                          colorFilter: ColorFilter.mode(
-                            isDark
-                                ? Colors.black.withValues(alpha: 0.08)
-                                : Colors.white.withValues(alpha: 0.15),
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 28),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Transactions',
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Hi, $firstName',
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontFamily: 'Gordita',
                   fontSize: 15,
@@ -813,132 +553,422 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   color: titleColor,
                 ),
               ),
-              if (transactions.isNotEmpty)
-                InkWell(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const TransactionsLedgerScreen(),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'See all',
-                    style: TextStyle(
-                      fontFamily: 'Gordita',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
-                    ),
-                  ),
+            ),
+            InkWell(
+              onTap: _showSelectCurrencySheet,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 7,
                 ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (transactions.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 56),
-              alignment: Alignment.center,
-              child: Text(
-                "You haven't performed any\ntransactions yet",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Gordita',
-                  fontSize: 13,
-                  height: 1.5,
-                  color: subColor,
+                decoration: BoxDecoration(
+                  color: chipBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FlagIcon(
+                      assetPath: currency.flagAsset,
+                      fallbackEmoji: currency.flagEmoji,
+                      width: 20,
+                      height: 14,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      currency.code,
+                      style: TextStyle(
+                        fontFamily: 'Gordita',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: titleColor,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 16,
+                      color: titleColor,
+                    ),
+                  ],
                 ),
               ),
-            )
-          else
-            Column(
-              children: transactions.take(5).map((tx) {
-                final isOutflow = tx.isOutflow;
-                final convertedAmount = tx.amount * currency.rateFromNgn;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: AppCard(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    borderRadius: 12,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ReceiptScreen(transaction: tx),
+            ),
+          ],
+        ),
+        const SizedBox(height: 28),
+        Text(
+          'Account Balance',
+          style: TextStyle(
+            fontFamily: 'Gordita',
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: subColor,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Flexible(
+              child: Text(
+                dashboard.isBalanceMasked
+                    ? '${currency.symbol}•••••••'
+                    : dashboard.formattedActiveBalance,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Gordita',
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: titleColor,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            InkWell(
+              onTap: () => dashboard.toggleBalanceMask(),
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: dashboard.isBalanceMasked
+                    ? Icon(
+                        Icons.visibility_outlined,
+                        size: 20,
+                        color: titleColor,
+                      )
+                    : SvgPicture.asset(
+                        AppAssets.iconEyeSlash,
+                        width: 20,
+                        height: 20,
+                        colorFilter: ColorFilter.mode(
+                          titleColor,
+                          BlendMode.srcIn,
                         ),
-                      );
-                    },
+                      ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            _DashboardActionChip(
+              label: isDark ? 'Fund Wallet' : 'Add Money',
+              svgAsset: AppAssets.iconPlus,
+              backgroundColor: chipBg,
+              foregroundColor: titleColor,
+              onTap: _showAddMoneyOptionsSheet,
+            ),
+            _DashboardActionChip(
+              key: const ValueKey('send_money_chip_btn'),
+              label: 'Send Money',
+              svgAsset: AppAssets.iconPaperPlane,
+              backgroundColor: chipBg,
+              foregroundColor: titleColor,
+              onTap: _showSendMoneyOptionsSheet,
+            ),
+            InkWell(
+              key: const ValueKey('more_quick_actions_btn'),
+              onTap: _showMoreQuickActionsSheet,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 11,
+                ),
+                decoration: BoxDecoration(
+                  color: chipBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: SvgPicture.asset(
+                  AppAssets.iconOption,
+                  width: 18,
+                  height: 18,
+                  colorFilter: ColorFilter.mode(titleColor, BlendMode.srcIn),
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (kycStatus != KycStatus.verified) ...[
+          const SizedBox(height: 24),
+          InkWell(
+            key: const ValueKey('dashboard_kyc_banner'),
+            onTap: kycStatus == KycStatus.inReview
+                ? null
+                : () => KycNavigator.start(context, kycFlow),
+            borderRadius: BorderRadius.circular(14),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 16,
+                    ),
+                    color: kycBg,
                     child: Row(
                       children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: isOutflow
-                                ? AppColors.accentRed.withValues(alpha: 0.12)
-                                : AppColors.primary.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            isOutflow
-                                ? Icons.arrow_upward_rounded
-                                : Icons.arrow_downward_rounded,
-                            size: 18,
-                            color: isOutflow
-                                ? AppColors.accentRed
-                                : AppColors.primary,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                tx.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                kycStatus == KycStatus.inReview
+                                    ? 'Verification in review'
+                                    : 'Complete your account setup',
                                 style: TextStyle(
                                   fontFamily: 'Gordita',
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: titleColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: kycTitleColor,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 4),
                               Text(
-                                DateFormatter.formatShort(tx.date),
+                                kycStatus == KycStatus.inReview
+                                    ? "We'll notify you once your ${kycFlow.label} KYC is approved"
+                                    : kycFlow == KycFlow.gbpEur
+                                    ? 'Complete GBP/EUR KYC to transact in ${currency.code}'
+                                    : 'Make all transactions by completing your KYC',
                                 style: TextStyle(
                                   fontFamily: 'Gordita',
                                   fontSize: 11,
-                                  color: subColor,
+                                  color: kycSubColor,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${isOutflow ? '-' : '+'}${CurrencyFormatter.format(convertedAmount, symbol: currency.symbol)}',
-                          style: TextStyle(
-                            fontFamily: 'Gordita',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: isOutflow ? titleColor : AppColors.primary,
+                        const SizedBox(width: 12),
+                        SvgPicture.asset(
+                          AppAssets.iconArrowRight,
+                          width: 18,
+                          height: 18,
+                          colorFilter: ColorFilter.mode(
+                            kycTitleColor,
+                            BlendMode.srcIn,
                           ),
                         ),
                       ],
                     ),
                   ),
-                );
-              }).toList(),
+                  Positioned(
+                    left: -10,
+                    bottom: -15,
+                    child: IgnorePointer(
+                      child: SvgPicture.asset(
+                        AppAssets.iconLineLeft,
+                        width: 80,
+                        height: 70,
+                        colorFilter: ColorFilter.mode(
+                          isDark
+                              ? Colors.black.withValues(alpha: 0.08)
+                              : Colors.white.withValues(alpha: 0.15),
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 40,
+                    top: -10,
+                    child: IgnorePointer(
+                      child: SvgPicture.asset(
+                        AppAssets.iconLineRight,
+                        width: 80,
+                        height: 50,
+                        colorFilter: ColorFilter.mode(
+                          isDark
+                              ? Colors.black.withValues(alpha: 0.08)
+                              : Colors.white.withValues(alpha: 0.15),
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
+          ),
         ],
-      ),
+      ],
+    );
+
+    final activity = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Transactions',
+              style: TextStyle(
+                fontFamily: 'Gordita',
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: titleColor,
+              ),
+            ),
+            if (transactions.isNotEmpty)
+              InkWell(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const TransactionsLedgerScreen(),
+                    ),
+                  );
+                },
+                child: const Text(
+                  'See all',
+                  style: TextStyle(
+                    fontFamily: 'Gordita',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (transactionsController.transactionsState.isLoading)
+          const _TransactionsSkeleton()
+        else if (transactions.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 56),
+            alignment: Alignment.center,
+            child: Text(
+              "You haven't performed any\ntransactions yet",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Gordita',
+                fontSize: 13,
+                height: 1.5,
+                color: subColor,
+              ),
+            ),
+          )
+        else
+          Column(
+            children: transactions.take(5).map((tx) {
+              final isOutflow = tx.isOutflow;
+              final convertedAmount = tx.amount * currency.rateFromNgn;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: AppCard(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  borderRadius: 12,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ReceiptScreen(transaction: tx),
+                      ),
+                    );
+                  },
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: isOutflow
+                              ? AppColors.accentRed.withValues(alpha: 0.12)
+                              : AppColors.primary.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          isOutflow
+                              ? Icons.arrow_upward_rounded
+                              : Icons.arrow_downward_rounded,
+                          size: 18,
+                          color: isOutflow
+                              ? AppColors.accentRed
+                              : AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tx.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'Gordita',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: titleColor,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              DateFormatter.formatShort(tx.date),
+                              style: TextStyle(
+                                fontFamily: 'Gordita',
+                                fontSize: 11,
+                                color: subColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${isOutflow ? '-' : '+'}${CurrencyFormatter.format(convertedAmount, symbol: currency.symbol)}',
+                        style: TextStyle(
+                          fontFamily: 'Gordita',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: isOutflow ? titleColor : AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+      ],
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 840;
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(
+            isWide ? 32 : 24,
+            8,
+            isWide ? 32 : 24,
+            24,
+          ),
+          child: isWide
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 5, child: summary),
+                    const SizedBox(width: 32),
+                    Expanded(flex: 6, child: activity),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [summary, const SizedBox(height: 28), activity],
+                ),
+        );
+      },
     );
   }
 
@@ -1158,32 +1188,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _ => SettingsTab(onExit: () => setState(() => _currentTab = 0)),
     };
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      body: SafeArea(child: ResponsiveContainer(maxWidth: 680, child: body)),
-      bottomNavigationBar: AppBottomNavBar(
-        currentIndex: _currentTab,
-        onTap: (index) => setState(() => _currentTab = index),
-        items: const [
-          AppNavItem(
-            label: 'Home',
-            activeSvg: AppAssets.navHomeActive,
-            inactiveSvg: AppAssets.navHomeInactive,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isTablet =
+            constraints.maxWidth >= ResponsiveUtils.tabletBreakpoint;
+        final content = AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          switchInCurve: Curves.easeOutCubic,
+          child: KeyedSubtree(key: ValueKey(_currentTab), child: body),
+        );
+
+        if (!isTablet) {
+          return Scaffold(
+            backgroundColor: bgColor,
+            body: SafeArea(
+              child: ResponsiveContainer(maxWidth: 680, child: content),
+            ),
+            bottomNavigationBar: AppBottomNavBar(
+              currentIndex: _currentTab,
+              onTap: _selectTab,
+              items: _navItems,
+            ),
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: bgColor,
+          body: Row(
+            children: [
+              AppSideNavRail(
+                items: _navItems,
+                currentIndex: _currentTab,
+                onTap: _selectTab,
+                extended:
+                    constraints.maxWidth >= ResponsiveUtils.desktopBreakpoint,
+              ),
+              Expanded(
+                child: SafeArea(
+                  left: false,
+                  child: ResponsiveContainer(
+                    maxWidth: _currentTab == 0 ? 1120 : 760,
+                    child: content,
+                  ),
+                ),
+              ),
+            ],
           ),
-          AppNavItem(
-            label: 'P2P',
-            activeSvg: AppAssets.navP2P,
-            inactiveSvg: AppAssets.navP2P,
-          ),
-          AppNavItem(
-            label: 'Settings',
-            activeSvg: AppAssets.navSettingsActive,
-            inactiveSvg: AppAssets.navSettingsInactive,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
+
+  void _selectTab(int index) => setState(() => _currentTab = index);
+
+  static const List<AppNavItem> _navItems = [
+    AppNavItem(
+      label: 'Home',
+      activeSvg: AppAssets.navHomeActive,
+      inactiveSvg: AppAssets.navHomeInactive,
+    ),
+    AppNavItem(
+      label: 'P2P',
+      activeSvg: AppAssets.navP2P,
+      inactiveSvg: AppAssets.navP2P,
+    ),
+    AppNavItem(
+      label: 'Settings',
+      activeSvg: AppAssets.navSettingsActive,
+      inactiveSvg: AppAssets.navSettingsInactive,
+    ),
+  ];
 }
 
 class _DashboardActionChip extends StatelessWidget {
@@ -1378,6 +1452,40 @@ class _AddMoneyOptionTile extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TransactionsSkeleton extends StatelessWidget {
+  const _TransactionsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(
+        4,
+        (index) => const Padding(
+          padding: EdgeInsets.only(bottom: 10),
+          child: Row(
+            children: [
+              SkeletonLoader(width: 40, height: 40, borderRadius: 10),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonLoader(width: 160, height: 12),
+                    SizedBox(height: 8),
+                    SkeletonLoader(width: 90, height: 10),
+                  ],
+                ),
+              ),
+              SizedBox(width: 12),
+              SkeletonLoader(width: 70, height: 12),
+            ],
+          ),
         ),
       ),
     );
