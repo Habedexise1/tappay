@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tappay/core/network/network_simulator.dart';
 import 'package:tappay/core/security/biometrics_service.dart';
 import 'package:tappay/core/storage/preferences_service.dart';
 import 'package:tappay/core/storage/secure_storage_service.dart';
@@ -30,7 +31,9 @@ Widget _wrapWithApp(PreferencesService prefs, Widget home) {
     preferencesService: prefs,
     secureStorageService: SecureStorageService(),
     biometricsService: BiometricsService(),
-    transactionRepository: MockTransactionRepository(),
+    transactionRepository: MockTransactionRepository(
+      network: const NetworkSimulator.instant(),
+    ),
     initialHome: home,
   );
 }

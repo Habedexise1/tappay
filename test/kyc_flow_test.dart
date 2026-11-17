@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tappay/core/network/network_simulator.dart';
 import 'package:tappay/core/security/biometrics_service.dart';
 import 'package:tappay/core/storage/preferences_service.dart';
 import 'package:tappay/core/storage/secure_storage_service.dart';
@@ -170,7 +171,9 @@ Widget _app({
     preferencesService: prefs,
     secureStorageService: _MemorySecureStorage(),
     biometricsService: _NoBiometrics(),
-    transactionRepository: MockTransactionRepository(),
+    transactionRepository: MockTransactionRepository(
+      network: const NetworkSimulator.instant(),
+    ),
     kycRepository: repository,
     kycMediaSource: media,
     cameraPermissionService: permission,

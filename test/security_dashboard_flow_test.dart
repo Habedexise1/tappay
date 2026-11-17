@@ -4,9 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tappay/app/theme/theme_controller.dart';
+import 'package:tappay/core/network/network_simulator.dart';
 import 'package:tappay/core/security/biometrics_service.dart';
 import 'package:tappay/core/storage/preferences_service.dart';
 import 'package:tappay/core/storage/secure_storage_service.dart';
+import 'package:tappay/core/widgets/app_bottom_nav_bar.dart';
+import 'package:tappay/core/widgets/result_state_screen.dart';
 import 'package:tappay/features/auth/presentation/screens/create_pin_screen.dart';
 import 'package:tappay/features/auth/presentation/screens/setup_biometrics_screen.dart';
 import 'package:tappay/features/dashboard/presentation/widgets/confirm_pin_sheet.dart';
@@ -90,7 +93,9 @@ Widget _wrapWithApp(PreferencesService prefs, Widget home) {
     preferencesService: prefs,
     secureStorageService: _InMemorySecureStorage(),
     biometricsService: _MockBiometricsService(),
-    transactionRepository: MockTransactionRepository(),
+    transactionRepository: MockTransactionRepository(
+      network: const NetworkSimulator.instant(),
+    ),
     initialHome: home,
   );
 }
@@ -258,7 +263,37 @@ void main() {
 
       expect(find.byType(ConfirmPinSheet), findsNothing);
       expect(find.byType(SendMoneyRecipientScreen), findsNothing);
+      expect(find.byType(ResultStateScreen), findsOneWidget);
+      expect(find.text('Transfer Successful'), findsOneWidget);
+
+      await tester.tap(find.text('Back to Home'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ResultStateScreen), findsNothing);
       expect(find.byType(DashboardScreen), findsOneWidget);
     },
   );
+
+  testWidgets('Dashboard adapts between phone and tablet breakpoints', (
+    WidgetTester tester,
+  ) async {
+    addTearDown(tester.view.reset);
+    tester.view.devicePixelRatio = 1.0;
+    tester.view.physicalSize = const Size(1280, 800);
+
+    final prefs = await _initMockPrefs();
+    await tester.pumpWidget(_wrapWithApp(prefs, const DashboardScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppSideNavRail), findsOneWidget);
+    expect(find.byType(AppBottomNavBar), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppSideNavRail), findsNothing);
+    expect(find.byType(AppBottomNavBar), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
