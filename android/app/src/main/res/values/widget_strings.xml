@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_title">TapPay Balance</string>
+    <string name="widget_scan">Scan QR</string>
+    <string name="widget_last_transaction">Last transaction</string>
+    <string name="widget_balance_placeholder">Open TapPay</string>
+    <string name="widget_empty_amount">—</string>
+    <string name="widget_no_transactions">No transactions yet</string>
+    <string name="widget_description">Primary balance, last transaction and quick QR scan</string>
+</resources>
