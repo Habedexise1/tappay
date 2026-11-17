@@ -1,17 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:home_widget/home_widget.dart';
 import 'package:provider/provider.dart';
 
+import 'app/observers/app_lifecycle_observer.dart';
+import 'app/routes/app_routes.dart';
 import 'app/theme/app_theme.dart';
 import 'app/theme/theme_controller.dart';
 import 'core/security/biometrics_service.dart';
 import 'core/security/privacy_shield.dart';
 import 'core/storage/preferences_service.dart';
 import 'core/storage/secure_storage_service.dart';
-import 'core/widgets/app_button.dart';
-import 'core/widgets/app_card.dart';
 import 'features/auth/presentation/auth_controller.dart';
 import 'features/dashboard/presentation/dashboard_controller.dart';
 import 'features/kyc/data/device_camera_permission_service.dart';
@@ -22,12 +21,12 @@ import 'features/kyc/presentation/kyc_controller.dart';
 import 'features/kyc/presentation/selfie_camera.dart';
 import 'features/onboarding/presentation/splash_screen.dart';
 import 'features/qr_transfer/presentation/qr_transfer_controller.dart';
-import 'features/qr_transfer/presentation/screens/qr_scanner_screen.dart';
 import 'features/settings/data/mock_settings_repository.dart';
 import 'features/settings/presentation/settings_controller.dart';
 import 'features/transactions/data/transaction_repository.dart';
 import 'features/transactions/presentation/transaction_controller.dart';
 import 'features/widgets_bridge/home_widget_service.dart';
+import 'features/widgets_bridge/widget_launch_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,8 +54,8 @@ class TapPayRoot extends StatelessWidget {
   final BiometricsService biometricsService;
   final TransactionRepository transactionRepository;
   final Widget? initialHome;
+  final HomeWidgetSync widgetSync;
 
-  /// KYC device integrations; tests inject fakes, the app uses the defaults.
   final KycRepository? kycRepository;
   final KycMediaSource? kycMediaSource;
   final CameraPermissionService? cameraPermissionService;
@@ -69,6 +68,7 @@ class TapPayRoot extends StatelessWidget {
     required this.biometricsService,
     required this.transactionRepository,
     this.initialHome,
+    this.widgetSync = const HomeWidgetService(),
     this.kycRepository,
     this.kycMediaSource,
     this.cameraPermissionService,
@@ -103,6 +103,7 @@ class TapPayRoot extends StatelessWidget {
           create: (_) => DashboardController(
             prefs: preferencesService,
             biometrics: biometricsService,
+            widgetSync: widgetSync,
           ),
         ),
         ChangeNotifierProvider<TransactionController>(
@@ -167,38 +168,43 @@ class TapPayApp extends StatefulWidget {
 
 class _TapPayAppState extends State<TapPayApp> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
-  StreamSubscription<Uri?>? _widgetClickSubscription;
+  final WidgetLaunchService _launchService = WidgetLaunchService();
+  final AppLifecycleObserver _lifecycleObserver = AppLifecycleObserver();
+  StreamSubscription<Uri>? _linkSubscription;
+  DateTime? _lastScannerLaunch;
 
   @override
   void initState() {
     super.initState();
+    _lifecycleObserver.attach();
     _initWidgetDeepLinks();
   }
 
   Future<void> _initWidgetDeepLinks() async {
-    try {
-      final initialUri = await HomeWidget.initiallyLaunchedFromHomeWidget();
-      _handleDeepLinkUri(initialUri);
-      _widgetClickSubscription = HomeWidget.widgetClicked.listen(
-        _handleDeepLinkUri,
-      );
-    } catch (_) {}
+    _linkSubscription = _launchService.links.listen(_handleDeepLinkUri);
+    _handleDeepLinkUri(await _launchService.start());
   }
 
   void _handleDeepLinkUri(Uri? uri) {
-    if (uri == null) return;
-    if (uri.scheme == 'tappay' && uri.host == 'qr_scanner') {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _navigatorKey.currentState?.push(
-          MaterialPageRoute(builder: (_) => const QrScannerScreen()),
-        );
-      });
+    if (!WidgetLaunchService.isScannerLink(uri)) return;
+
+    final now = DateTime.now();
+    final last = _lastScannerLaunch;
+    if (last != null && now.difference(last) < const Duration(seconds: 2)) {
+      return;
     }
+    _lastScannerLaunch = now;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _navigatorKey.currentState?.pushNamed(AppRoutes.qrScanner);
+    });
   }
 
   @override
   void dispose() {
-    _widgetClickSubscription?.cancel();
+    _linkSubscription?.cancel();
+    _launchService.dispose();
+    _lifecycleObserver.detach();
     super.dispose();
   }
 
@@ -214,143 +220,13 @@ class _TapPayAppState extends State<TapPayApp> {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeController.themeMode,
       builder: (context, child) {
-        return AppPrivacyShield(child: child ?? const SizedBox.shrink());
+        return AppPrivacyShield(
+          obscured: _lifecycleObserver.isObscured,
+          child: child ?? const SizedBox.shrink(),
+        );
       },
+      onGenerateRoute: AppRoutes.onGenerateRoute,
       home: widget.home ?? const SplashScreen(),
-    );
-  }
-}
-
-class ArchitectureReadyScreen extends StatelessWidget {
-  const ArchitectureReadyScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final themeController = context.watch<ThemeController>();
-    final isDark = themeController.isDarkMode;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('TapPay Setup Ready'),
-        actions: [
-          IconButton(
-            icon: Icon(
-              isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-            ),
-            tooltip: 'Toggle Theme',
-            onPressed: () => themeController.toggleTheme(),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: Theme.of(
-                        context,
-                      ).primaryColor.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.check_circle_rounded,
-                      size: 48,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Architecture & Provider Ready',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Clean layer separation, Provider controllers, Theme management, and security wrappers are configured. Ready for your designs!',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  AppCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildStatusRow(
-                          context,
-                          'State Management',
-                          'Provider (MultiProvider)',
-                        ),
-                        const Divider(height: 24),
-                        _buildStatusRow(
-                          context,
-                          'Theme Mode',
-                          isDark ? 'Dark Mode' : 'Light Mode',
-                        ),
-                        const Divider(height: 24),
-                        _buildStatusRow(
-                          context,
-                          'Privacy Shield',
-                          'Active (Task Switcher)',
-                        ),
-                        const Divider(height: 24),
-                        _buildStatusRow(
-                          context,
-                          'Security & Biometrics',
-                          'local_auth & SecureStorage',
-                        ),
-                        const Divider(height: 24),
-                        _buildStatusRow(
-                          context,
-                          'Native Widgets',
-                          'HomeWidget IPC Bridge',
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  AppButton(
-                    text: isDark
-                        ? 'Switch to Light Theme'
-                        : 'Switch to Dark Theme',
-                    variant: AppButtonVariant.secondary,
-                    onPressed: () => themeController.toggleTheme(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusRow(BuildContext context, String title, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Flexible(
-          child: Text(title, style: Theme.of(context).textTheme.bodyMedium),
-        ),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).primaryColor,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

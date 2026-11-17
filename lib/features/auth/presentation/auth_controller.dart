@@ -2,16 +2,25 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+
+import '../../../core/errors/error_mapper.dart';
 import '../../../core/security/biometrics_service.dart';
 import '../../../core/storage/secure_storage_service.dart';
 import '../../../core/utils/view_state.dart';
+import '../data/mock_auth_repository.dart';
 import '../domain/auth_models.dart';
+import '../domain/auth_repository.dart';
 
 class AuthController extends ChangeNotifier {
   final SecureStorageService storage;
   final BiometricsService biometrics;
+  final AuthRepository repository;
 
-  AuthController({required this.storage, required this.biometrics}) {
+  AuthController({
+    required this.storage,
+    required this.biometrics,
+    AuthRepository? repository,
+  }) : repository = repository ?? MockAuthRepository(storage: storage) {
     _loadInitialSecurityState();
   }
 
@@ -50,40 +59,12 @@ class AuthController extends ChangeNotifier {
   );
   SecuritySettings get settings => _settings;
 
-  static const String _devPinOverride = String.fromEnvironment(
-    'TAPPAY_DEV_PIN',
-  );
-
   Future<void> _loadInitialSecurityState() async {
     _securityState = const Loading();
     notifyListeners();
 
     try {
-      final hasPin = await storage.hasPin();
-
-      if (kDebugMode && _devPinOverride.length == 4) {
-        await storage.savePin(_devPinOverride);
-        debugPrint('TapPay: debug PIN override applied ($_devPinOverride)');
-      } else if (!hasPin) {
-        await storage.savePin('1234');
-      }
-
-      final biometricsEnabled = await storage.isBiometricsEnabled();
-      final twoFactorEnabled = await storage.isTwoFactorEnabled();
-      final methodStr = await storage.getTwoFactorType();
-
-      final method = TwoFactorMethod.values.firstWhere(
-        (m) => m.badge.toLowerCase() == methodStr.toLowerCase(),
-        orElse: () => TwoFactorMethod.sms,
-      );
-
-      _settings = SecuritySettings(
-        isPinSet: true,
-        isBiometricsEnabled: biometricsEnabled,
-        isTwoFactorEnabled: twoFactorEnabled,
-        twoFactorMethod: method,
-      );
-
+      _settings = await repository.loadSecuritySettings();
       _securityState = Success(_settings);
       notifyListeners();
     } catch (e) {
@@ -140,10 +121,7 @@ class AuthController extends ChangeNotifier {
     _authFlowState = const Loading('Creating account...');
     notifyListeners();
 
-    await storage.savePassword(password);
-    await storage.saveToken(
-      'tappay_token_${DateTime.now().millisecondsSinceEpoch}',
-    );
+    await repository.register(password: password);
 
     _authFlowState = const Success(true);
     notifyListeners();
@@ -163,10 +141,7 @@ class AuthController extends ChangeNotifier {
     _authFlowState = const Loading('Signing in...');
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 500));
-    await storage.saveToken(
-      'tappay_token_${DateTime.now().millisecondsSinceEpoch}',
-    );
+    await repository.login(email: email, password: password);
 
     _authFlowState = const Success(true);
     notifyListeners();
@@ -183,7 +158,7 @@ class AuthController extends ChangeNotifier {
     _authFlowState = const Loading('Sending OTP...');
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 400));
+    await repository.requestPasswordReset(email);
 
     _authFlowState = const Success(true);
     notifyListeners();
@@ -191,7 +166,7 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<void> saveCreatedPin(String pin) async {
-    await storage.savePin(pin);
+    await repository.savePin(pin);
     _settings = _settings.copyWith(isPinSet: true);
     _pinActionState = const Success(true);
     notifyListeners();
@@ -201,10 +176,7 @@ class AuthController extends ChangeNotifier {
     _pinActionState = const Loading('Verifying PIN...');
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    final currentPin = await storage.getPin() ?? '1234';
-    if (enteredPin == currentPin) {
+    if (await repository.verifyPin(enteredPin)) {
       _pinActionState = const Success(true);
       notifyListeners();
       return true;
@@ -219,25 +191,23 @@ class AuthController extends ChangeNotifier {
     required String currentPin,
     required String newPin,
   }) async {
-    _pinActionState = const Loading('Updating PIN...');
-    notifyListeners();
-
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    final savedPin = await storage.getPin() ?? '1234';
-    if (currentPin != savedPin) {
-      _pinActionState = const Failure('Current PIN is incorrect');
-      notifyListeners();
-      return false;
-    }
-
     if (newPin.length != 4) {
       _pinActionState = const Failure('New PIN must be exactly 4 digits');
       notifyListeners();
       return false;
     }
 
-    await storage.savePin(newPin);
+    _pinActionState = const Loading('Updating PIN...');
+    notifyListeners();
+
+    try {
+      await repository.changePin(currentPin: currentPin, newPin: newPin);
+    } catch (error) {
+      _pinActionState = Failure(ErrorMapper.toFailure(error).message);
+      notifyListeners();
+      return false;
+    }
+
     _settings = _settings.copyWith(isPinSet: true);
     _pinActionState = const Success(true);
     notifyListeners();
@@ -252,7 +222,7 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<void> toggleBiometrics(bool enable) async {
-    await storage.setBiometricsEnabled(enable);
+    await repository.setBiometricsEnabled(enable);
     _settings = _settings.copyWith(isBiometricsEnabled: enable);
     notifyListeners();
   }
@@ -308,16 +278,18 @@ class AuthController extends ChangeNotifier {
 
     _passwordState = const Loading('Updating password...');
     notifyListeners();
-    await Future.delayed(const Duration(milliseconds: 800));
 
-    final saved = await storage.getPassword();
-    if (saved != null && saved.isNotEmpty && saved != currentPassword) {
-      _passwordState = const Failure('Current password is incorrect');
+    try {
+      await repository.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+    } catch (error) {
+      _passwordState = Failure(ErrorMapper.toFailure(error).message);
       notifyListeners();
       return false;
     }
 
-    await storage.savePassword(newPassword);
     _passwordState = const Success(true);
     notifyListeners();
     return true;
@@ -345,7 +317,7 @@ class AuthController extends ChangeNotifier {
     final ok = await verifyOtp(otp);
     if (!ok) return false;
     if (method == TwoFactorMethod.authenticator) {
-      await storage.saveTwoFactorSecret(prepareTwoFactorSecret());
+      await repository.saveTwoFactorSecret(prepareTwoFactorSecret());
     }
     await updateTwoFactor(enabled: true, method: method);
     _pendingTwoFactorSecret = null;
@@ -369,11 +341,7 @@ class AuthController extends ChangeNotifier {
 
   Future<void> signOut({bool wipeDevice = false}) async {
     _countdownTimer?.cancel();
-    if (wipeDevice) {
-      await storage.clearAll();
-    } else {
-      await storage.deleteToken();
-    }
+    await repository.signOut(wipeDevice: wipeDevice);
     _authFlowState = const Initial();
     _pinActionState = const Initial();
     _otpState = const Initial();
@@ -389,9 +357,7 @@ class AuthController extends ChangeNotifier {
     _securityState = const Loading('Updating 2FA Settings...');
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    await storage.setTwoFactorEnabled(enabled, type: method.badge);
+    await repository.updateTwoFactor(enabled: enabled, method: method);
     _settings = _settings.copyWith(
       isTwoFactorEnabled: enabled,
       twoFactorMethod: method,
@@ -417,9 +383,7 @@ class AuthController extends ChangeNotifier {
     _otpState = const Loading('Verifying code...');
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 1000));
-
-    if (otp == '123456' || otp.length == 6) {
+    if (await repository.verifyOtp(otp)) {
       _otpState = const Success(true);
       notifyListeners();
       return true;
